@@ -1,0 +1,21 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# Local secrets and runtime config
+.env
+my_agent/.env
+
+# Generated discussion outputs
+my_agent/runs/
+
+# Local reference/checkouts managed separately
+ai-hedge-fund/
+MediaCrawler/
+mediacrawler_issue_assets/
+
+# Tool/cache directories
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
