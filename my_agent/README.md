@@ -119,10 +119,37 @@ python3 -m my_agent extract-url "https://www.zhihu.com/question/..."
 python3 -m my_agent extract-url "https://m.weibo.cn/detail/..."
 ```
 
+提取成功后会在 `my_agent/events/` 下保存一份 Markdown 讨论事件稿，结构固定为：
+
+```markdown
+---
+my_agent_event_version: "1"
+event_type: "social_post"
+platform: "zhihu"
+source_url: "..."
+title: "..."
+author: "..."
+extracted_at: "..."
+---
+
+# 讨论事件：标题
+
+## 事件来源
+## 原帖正文
+## 评论区摘录
+## 讨论任务
+```
+
 进入讨论：
 
 ```bash
 python3 -m my_agent ask "https://www.zhihu.com/question/..." --llm openai --rounds 1 --max-agents 2
+```
+
+也可以直接加载已经保存好的事件稿：
+
+```bash
+python3 -m my_agent ask my_agent/events/20260601-230000-zhihu-example.md --llm openai --style show
 ```
 
 要求：

@@ -16,6 +16,7 @@ from my_agent.core.llm import (
 from my_agent.core.progress import noop_progress, stderr_progress
 from my_agent.core.recorder import DiscussionRecorder
 from my_agent.core.skill_loader import load_skills
+from my_agent.input_sources.event_markdown import save_discussion_event_markdown, with_event_markdown_path
 from my_agent.input_sources.media_crawler import MediaCrawlerError, extract_social_url
 from my_agent.input_sources.resolver import normalize_user_input
 
@@ -23,6 +24,7 @@ from my_agent.input_sources.resolver import normalize_user_input
 PACKAGE_ROOT = Path(__file__).resolve().parent
 DEFAULT_SKILL_DIRS = [PACKAGE_ROOT / "demo_skills", PACKAGE_ROOT / "skills"]
 DEFAULT_RUN_DIR = PACKAGE_ROOT / "runs"
+DEFAULT_EVENT_DIR = PACKAGE_ROOT / "events"
 DEFAULT_ENV_FILES = [Path.cwd() / ".env", PACKAGE_ROOT / ".env"]
 
 
@@ -44,6 +46,7 @@ def main() -> None:
     ask.add_argument("--llm", choices=["mock", "openai"], default="mock", help="LLM backend. Default: mock.")
     ask.add_argument("--model", help="Override MY_AGENT_MODEL for this run.")
     ask.add_argument("--choose-model", action="store_true", help="Choose a model from MY_AGENT_AVAILABLE_MODELS.")
+    ask.add_argument("--style", choices=["analysis", "show"], default="analysis", help="Discussion style. Default: analysis.")
     ask.add_argument("--serial", action="store_true", help="Generate agent utterances one by one instead of per-round parallel generation.")
     ask.add_argument("--max-concurrency", type=int, help="Maximum parallel LLM calls per round. Default: selected agent count.")
     ask.add_argument("--quiet", action="store_true", help="Do not print progress messages.")
@@ -68,6 +71,7 @@ def main() -> None:
     subparsers.add_parser("list-llm-models", help="List MY_AGENT_AVAILABLE_MODELS or opencode models.")
     extract_url = subparsers.add_parser("extract-url", help="Extract social-media URL content without running agents.")
     extract_url.add_argument("url", help="Zhihu or Weibo URL to extract.")
+    extract_url.add_argument("--event-dir", type=Path, default=DEFAULT_EVENT_DIR, help="Directory to save discussion event markdown.")
     extract_url.add_argument("--quiet", action="store_true", help="Do not print progress messages.")
 
     args = parser.parse_args()
@@ -97,10 +101,12 @@ def main() -> None:
         progress = noop_progress if args.quiet else stderr_progress
         try:
             extracted = extract_social_url(args.url, progress=progress)
+            event_path = save_discussion_event_markdown(extracted, args.event_dir, progress=progress)
+            extracted = with_event_markdown_path(extracted, event_path)
         except Exception as exc:
             print(as_error_message(exc), file=sys.stderr)
             raise SystemExit(1)
-        print_extracted_input(extracted)
+        print_extracted_input(extracted, event_path=event_path)
         return
 
     progress = noop_progress
@@ -119,7 +125,7 @@ def main() -> None:
         if not raw_question:
             raw_question = input("请输入问题或链接：").strip()
         try:
-            question = normalize_user_input(raw_question, progress=progress)
+            question = normalize_user_input(raw_question, progress=progress, event_dir=DEFAULT_EVENT_DIR)
         except Exception as exc:
             print(as_error_message(exc), file=sys.stderr)
             raise SystemExit(1)
@@ -145,6 +151,7 @@ def main() -> None:
                 progress=progress,
                 parallel=not args.serial,
                 max_concurrency=max(1, args.max_concurrency) if args.max_concurrency else None,
+                style=args.style,
             )
         except Exception as exc:
             print(as_error_message(exc), file=sys.stderr)
@@ -190,11 +197,13 @@ def list_llm_models(current_model: str | None, models: list[str], source: str) -
         print(f"{prefix} {model}")
 
 
-def print_extracted_input(extracted) -> None:
+def print_extracted_input(extracted, event_path: Path | None = None) -> None:
     print(f"平台：{extracted.platform}")
     print(f"标题：{extracted.title or '未提取到标题'}")
     print(f"作者：{extracted.author or '未提取到作者'}")
     print(f"链接：{extracted.source_url}")
+    if event_path:
+        print(f"事件稿：{event_path}")
     print(f"正文长度：{len(extracted.content)}")
     print(f"评论数量：{len(extracted.comments)}")
     print("\n--- 内容预览 ---")

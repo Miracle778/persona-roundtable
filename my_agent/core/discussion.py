@@ -3,7 +3,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from my_agent.core.agent import PersonaAgent
+from my_agent.core.agent import PersonaAgent, nickname_options, replace_teacher_titles
 from my_agent.core.llm import LLMClient, MockLLMClient, as_error_message
 from my_agent.core.matcher import select_agents
 from my_agent.core.models import DiscussionRun, NormalizedInput, PersonaSkill, Utterance, now_iso
@@ -26,6 +26,7 @@ class DiscussionEngine:
         progress: ProgressCallback = noop_progress,
         parallel: bool = True,
         max_concurrency: int | None = None,
+        style: str = "analysis",
     ) -> DiscussionRun:
         progress("[4/8] 正在匹配讨论人物...")
         detected_categories, selections = select_agents(
@@ -38,7 +39,7 @@ class DiscussionEngine:
             "[5/8] 匹配到人物："
             + "、".join(selection.skill.display_name for selection in selections)
         )
-        agents = [PersonaAgent(selection.skill, self.llm) for selection in selections]
+        agents = [PersonaAgent(selection.skill, self.llm, style=style) for selection in selections]
         utterances: list[Utterance] = []
         round_summaries: list[str] = []
         for round_index in range(1, rounds + 1):
@@ -72,6 +73,7 @@ class DiscussionEngine:
                         utterances=[item for item in utterances if item.round_index == round_index],
                         previous_summaries=round_summaries,
                         llm=self.llm,
+                        style=style,
                     )
                 )
 
@@ -82,6 +84,7 @@ class DiscussionEngine:
             categories=detected_categories,
             llm=self.llm,
             round_summaries=round_summaries,
+            style=style,
         )
         run_id = build_run_id()
         output_dir = self.output_root / run_id
@@ -94,6 +97,7 @@ class DiscussionEngine:
             utterances=utterances,
             summary=summary,
             output_dir=output_dir,
+            style=style,
         )
 
 
@@ -132,15 +136,19 @@ def synthesize_summary(
     categories: list[str],
     llm: LLMClient,
     round_summaries: list[str] | None = None,
+    style: str = "analysis",
 ) -> str:
     if isinstance(llm, MockLLMClient):
-        return synthesize_rule_summary(question, utterances, categories)
+        return synthesize_rule_summary(question, utterances, categories, style=style)
 
-    prompt = build_moderator_prompt(question, utterances, categories, round_summaries or [])
+    prompt = build_moderator_prompt(question, utterances, categories, round_summaries or [], style=style)
     try:
-        return llm.complete(prompt).strip()
+        summary = llm.complete(prompt).strip()
+        if style == "show":
+            summary = replace_teacher_titles(summary, [item.agent_name for item in utterances])
+        return summary
     except Exception as exc:
-        fallback = synthesize_rule_summary(question, utterances, categories)
+        fallback = synthesize_rule_summary(question, utterances, categories, style=style)
         return f"LLM 主持总结失败，已使用规则兜底。错误：{as_error_message(exc)}\n\n{fallback}"
 
 
@@ -149,13 +157,49 @@ def build_moderator_prompt(
     utterances: list[Utterance],
     categories: list[str],
     round_summaries: list[str] | None = None,
+    style: str = "analysis",
 ) -> str:
     transcript = "\n\n".join(
         f"[第{item.round_index}轮][{item.agent_name}]\n{item.content}"
         for item in utterances
     )
     participant_names = "、".join(dict.fromkeys(item.agent_name for item in utterances))
+    nickname_guide = build_moderator_nickname_guide(list(dict.fromkeys(item.agent_name for item in utterances)))
     round_summary_text = "\n\n".join(round_summaries or []) or "无。"
+    if style == "show":
+        return f"""
+你是一档多人物圆桌节目的主持人。请只基于公开讨论记录做“主持收场”，不新增事实，不伪装成任何人物，不替用户做高风险决定。
+
+原始问题：
+{question.content}
+
+识别分类：
+{"、".join(categories)}
+
+参与人物：
+{participant_names}
+
+嘉宾昵称参考：
+{nickname_guide}
+
+公开讨论记录：
+{transcript}
+
+每轮控场摘要：
+{round_summary_text}
+
+请输出中文主持收场，260-520字，像一档节目最后一分钟的自然收束，不要写成固定模板，不要强制小标题。
+
+要求：
+- 开头要有一句有记忆点的节目式收场，可以轻轻调侃本场最荒诞的碰撞。
+- 回收人物之间的具体接话和冲突，不要写成会议纪要。
+- 称呼嘉宾时不要统一叫“XX老师”，可以按嘉宾风格使用昵称，例如“老马”“张三代言人”“抽象哥”。
+- 主持人要有自己的口吻：松弛、机灵、能接梗，但不抢人物的戏。
+- 建议要具体、低成本、可验证。
+- 结尾要像真的收场，有一句干净的落点，不要喊口号。
+- 只输出收场正文，不要输出解释性前言。
+""".strip()
+
     return f"""
 你是一个多人物讨论系统的中立主持人。请只基于公开讨论记录做总结，不新增事实，不伪装成任何人物，不替用户做高风险决定。
 
@@ -192,6 +236,7 @@ def synthesize_round_summary(
     utterances: list[Utterance],
     previous_summaries: list[str],
     llm: LLMClient,
+    style: str = "analysis",
 ) -> str:
     if isinstance(llm, MockLLMClient):
         points = "\n".join(
@@ -208,7 +253,32 @@ def synthesize_round_summary(
         for item in utterances
     )
     previous_text = "\n\n".join(previous_summaries) or "无。"
-    prompt = f"""
+    if style == "show":
+        prompt = f"""
+你是多人物圆桌节目的临时主持人。请把本轮公开发言压缩成下一轮可参考的“控场摘要 + 点名接话索引”。
+
+原始问题：
+{question.content}
+
+此前轮次控场摘要：
+{previous_text}
+
+本轮发言：
+{transcript}
+
+请输出中文，180-320字，必须包含：
+1. 本轮名场面：一句话回收本轮最有节目效果的观点碰撞。
+2. 点名接话索引：逐个列出每位人物的核心观点，以及下一轮最值得被谁回应/反驳/补充；可以给人物起自然外号。
+3. 下一轮追问：给出1-2个能制造真实接话的问题。
+
+要求：
+- 保留人物名，不要只写“大家认为”。
+- 不要把嘉宾统一称为“XX老师”，要让下一轮能像真人聊天一样接话，例如“老马该回应张三代言人的风险账”。
+- 可以轻微幽默，但不要低俗，不要新增事实。
+- 只输出摘要正文。
+""".strip()
+    else:
+        prompt = f"""
 你是多人物讨论的临时主持人。请把本轮公开发言压缩成下一轮可参考的“战场摘要 + 点名接话索引”。
 
 原始问题：
@@ -231,7 +301,10 @@ def synthesize_round_summary(
 - 只输出摘要正文，不要新增事实，不要伪装成任何人物。
 """.strip()
     try:
-        return llm.complete(prompt).strip()
+        summary = llm.complete(prompt).strip()
+        if style == "show":
+            summary = replace_teacher_titles(summary, [item.agent_name for item in utterances])
+        return summary
     except Exception as exc:
         points = "；".join(
             f"{item.agent_name}：{compact_sentence(item.content, max_chars=90)}"
@@ -244,6 +317,7 @@ def synthesize_rule_summary(
     question: NormalizedInput,
     utterances: list[Utterance],
     categories: list[str],
+    style: str = "analysis",
 ) -> str:
     names = "、".join(dict.fromkeys(item.agent_name for item in utterances))
     category_text = "、".join(categories)
@@ -251,6 +325,14 @@ def synthesize_rule_summary(
         f"- {item.agent_name}：{compact_sentence(item.content)}"
         for item in utterances
     )
+    if style == "show":
+        return (
+            f"今晚这桌围着「{question.content}」转了一圈，{names} 各自把问题拽回自己的片场，"
+            f"场面有点像一群人围着同一口锅判断火候：有人看柴，有人看锅，还有人已经开始问谁洗碗。\n\n"
+            f"真正有用的分歧在这里：\n{key_points}\n\n"
+            f"所以别急着给自己上价值，也别急着把热血当商业计划书。先做一个小验证：写清楚最坏会亏什么、"
+            f"第一步怎么试、谁愿意买单。如果这三件事都说不清，今天先散场，明天再谈梦想也不迟。"
+        )
     return (
         f"1. 共识\n"
         f"本次问题「{question.content}」被归入「{category_text}」。参与讨论的人物视角包括：{names}。"
@@ -273,3 +355,12 @@ def compact_sentence(content: str, max_chars: int = 220) -> str:
     if best >= 80:
         return cut[: best + 1]
     return cut.rstrip("，,；;：:、") + "..."
+
+
+def build_moderator_nickname_guide(names: list[str]) -> str:
+    rows = []
+    for name in names:
+        options = nickname_options(name)
+        if options:
+            rows.append(f"- {name}：{ '、'.join(options) }")
+    return "\n".join(rows) or "可按发言风格临场起简短昵称，但不要使用“XX老师”的统一称呼。"

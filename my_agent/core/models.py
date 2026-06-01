@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 
-InputType = Literal["text", "url"]
+InputType = Literal["text", "url", "event_markdown"]
 
 
 @dataclass(frozen=True)
@@ -66,6 +66,7 @@ class DiscussionRun:
     utterances: list[Utterance]
     summary: str
     output_dir: Path
+    style: str = "analysis"
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -77,4 +78,3 @@ class DiscussionRun:
 
 def now_iso() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
-
