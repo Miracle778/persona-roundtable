@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>my_agent Web</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="history-pane">
+      <header class="pane-head">
+        <strong>会话</strong>
+        <button id="refreshSessions" type="button">刷新</button>
+      </header>
+      <label class="search-row">
+        <span>搜索</span>
+        <input id="sessionSearch" type="search" placeholder="主题、标签、发言" />
+      </label>
+      <nav id="sessionList" class="session-list" aria-label="历史会话"></nav>
+    </aside>
+
+    <section class="conversation-pane">
+      <header class="topic-editor">
+        <label>
+          <span>原始输入</span>
+          <textarea id="rawInput" rows="3" placeholder="输入想讨论的内容、话题或链接"></textarea>
+        </label>
+        <div class="toolbar">
+          <button id="refineTopic" type="button">精炼主题</button>
+          <button id="createSession" type="button">开始讨论</button>
+        </div>
+        <section id="topicCard" class="topic-card hidden" aria-label="话题卡">
+          <label>
+            <span>主题</span>
+            <input id="topicTitle" />
+          </label>
+          <label>
+            <span>标签</span>
+            <input id="topicTags" />
+          </label>
+          <label>
+            <span>讨论任务</span>
+            <textarea id="topicTask" rows="3"></textarea>
+          </label>
+        </section>
+      </header>
+
+      <section id="messageList" class="message-list" aria-label="讨论消息"></section>
+
+      <form id="messageForm" class="message-form">
+        <textarea id="messageInput" rows="2" placeholder="继续输入"></textarea>
+        <button type="submit">发送</button>
+      </form>
+    </section>
+
+    <aside class="control-pane">
+      <section>
+        <header class="pane-head">
+          <strong>角色</strong>
+          <button id="assignModel" type="button">分配模型</button>
+        </header>
+        <div class="model-picker">
+          <select id="providerSelect"></select>
+          <select id="modelSelect"></select>
+        </div>
+        <div id="personaList" class="persona-list" aria-label="角色列表"></div>
+        <form id="personaForm" class="persona-editor">
+          <label>
+            <span>角色名</span>
+            <input id="personaName" />
+          </label>
+          <label>
+            <span>说明</span>
+            <input id="personaDescription" />
+          </label>
+          <label>
+            <span>标签</span>
+            <input id="personaCategories" />
+          </label>
+          <label>
+            <span>Persona Prompt</span>
+            <textarea id="personaPrompt" rows="8" spellcheck="false"></textarea>
+          </label>
+          <div class="toolbar">
+            <button id="savePersona" type="submit">保存副本</button>
+            <button id="clonePersona" type="button">新增副本</button>
+            <button id="archivePersona" type="button">归档</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="config-section">
+        <header class="pane-head">
+          <strong>Provider</strong>
+          <button id="saveConfig" type="button">保存</button>
+        </header>
+        <textarea id="configJson" rows="12" spellcheck="false"></textarea>
+      </section>
+    </aside>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
