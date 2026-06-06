@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import tempfile
-import threading
 import unittest
-import urllib.request
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 
-from my_agent.web.server import make_handler
+import httpx
+
+from my_agent.web.server import create_app
 from my_agent.web.service import WebAppService
 
 
@@ -59,94 +59,109 @@ categories:
                 topic_llm_client=FakeTopicLLM(),
             )
             service.bootstrap()
-            try:
-                server = ThreadingHTTPServer(
-                    ("127.0.0.1", 0),
-                    make_handler(service=service, static_dir=root),
-                )
-            except PermissionError as exc:
-                self.skipTest(f"socket binding is not allowed in this sandbox: {exc}")
-            thread = threading.Thread(target=server.serve_forever, daemon=True)
-            thread.start()
-            try:
-                base = f"http://127.0.0.1:{server.server_port}"
-                topic = post_json(base + "/api/topic/refine", {"raw_input": "AI 产品怎么做"})
-                self.assertIn("title", topic)
-                clarified = post_json(
-                    base + "/api/topic/refine",
-                    {
-                        "raw_input": "AI 产品怎么做",
-                        "previous_topic": topic,
-                        "clarification_answers": ["更关心 B 端付费验证"],
-                    },
-                )
-                self.assertEqual(clarified["title"], "HTTP 精炼主题")
-                self.assertEqual(clarified["clarification_round"], 1)
-                self.assertEqual(clarified["refinement_source"], "llm")
+            app = create_app(service=service, static_dir=root)
+            asyncio.run(self._exercise_api(app))
 
-                personas = get_json(base + "/api/personas")
-                persona_id = personas[0]["id"]
-                clone = post_json(
-                    base + "/api/personas",
-                    {"source_persona_id": persona_id, "display_name": "测试角色副本"},
-                )
-                self.assertNotEqual(clone["id"], persona_id)
-                patched = request_json(
-                    "PATCH",
-                    base + f"/api/personas/{clone['id']}",
-                    {
-                        "display_name": "商业化测试角色",
-                        "description": "专注商业化验证",
-                        "categories": ["创业产品", "投资市场"],
-                        "prompt": "只编辑 persona 副本，不修改原始 Skill。",
-                    },
-                )
-                self.assertEqual(patched["display_name"], "商业化测试角色")
-                self.assertIn("persona 副本", patched["prompt"])
+    async def _exercise_api(self, app) -> None:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(
+            transport=transport,
+            base_url="http://testserver",
+        ) as client:
+            topic = await post_json(
+                client,
+                "/api/topic/refine",
+                {"raw_input": "AI 产品怎么做"},
+            )
+            self.assertIn("title", topic)
+            clarified = await post_json(
+                client,
+                "/api/topic/refine",
+                {
+                    "raw_input": "AI 产品怎么做",
+                    "previous_topic": topic,
+                    "clarification_answers": ["更关心 B 端付费验证"],
+                },
+            )
+            self.assertEqual(clarified["title"], "HTTP 精炼主题")
+            self.assertEqual(clarified["clarification_round"], 1)
+            self.assertEqual(clarified["refinement_source"], "llm")
 
-                session = post_json(
-                    base + "/api/sessions",
-                    {
-                        "raw_input": "AI 产品怎么做",
-                        "topic": topic,
-                        "persona_ids": [persona_id],
-                    },
-                )
-                self.assertEqual(session["messages"][0]["role"], "user")
+            personas = await get_json(client, "/api/personas")
+            persona_id = personas[0]["id"]
+            clone = await post_json(
+                client,
+                "/api/personas",
+                {"source_persona_id": persona_id, "display_name": "测试角色副本"},
+                expected_status=201,
+            )
+            self.assertNotEqual(clone["id"], persona_id)
+            patched = await request_json(
+                client,
+                "PATCH",
+                f"/api/personas/{clone['id']}",
+                {
+                    "display_name": "商业化测试角色",
+                    "description": "专注商业化验证",
+                    "categories": ["创业产品", "投资市场"],
+                    "prompt": "只编辑 persona 副本，不修改原始 Skill。",
+                },
+            )
+            self.assertEqual(patched["display_name"], "商业化测试角色")
+            self.assertIn("persona 副本", patched["prompt"])
 
-                updated = post_json(
-                    base + f"/api/sessions/{session['id']}/messages",
-                    {"content": "继续说商业化"},
-                )
-                self.assertGreaterEqual(len(updated["messages"]), 3)
+            session = await post_json(
+                client,
+                "/api/sessions",
+                {
+                    "raw_input": "AI 产品怎么做",
+                    "topic": topic,
+                    "persona_ids": [persona_id],
+                },
+                expected_status=201,
+            )
+            self.assertEqual(session["messages"][0]["role"], "user")
 
-                deleted = request_json("DELETE", base + f"/api/personas/{clone['id']}")
-                self.assertTrue(deleted["archived"])
-            finally:
-                server.shutdown()
-                thread.join(timeout=2)
-                server.server_close()
+            updated = await post_json(
+                client,
+                f"/api/sessions/{session['id']}/messages",
+                {"content": "继续说商业化"},
+                expected_status=201,
+            )
+            self.assertGreaterEqual(len(updated["messages"]), 3)
 
-
-def get_json(url: str):
-    with urllib.request.urlopen(url, timeout=5) as response:
-        return json.loads(response.read().decode("utf-8"))
-
-
-def post_json(url: str, payload: dict):
-    return request_json("POST", url, payload)
+            deleted = await request_json(client, "DELETE", f"/api/personas/{clone['id']}")
+            self.assertTrue(deleted["archived"])
 
 
-def request_json(method: str, url: str, payload: dict | None = None):
-    data = None if payload is None else json.dumps(payload).encode("utf-8")
-    request = urllib.request.Request(
-        url,
-        data=data,
-        method=method,
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(request, timeout=5) as response:
-        return json.loads(response.read().decode("utf-8"))
+async def get_json(client: httpx.AsyncClient, path: str):
+    response = await client.get(path)
+    response.raise_for_status()
+    return response.json()
+
+
+async def post_json(
+    client: httpx.AsyncClient,
+    path: str,
+    payload: dict,
+    expected_status: int = 200,
+):
+    return await request_json(client, "POST", path, payload, expected_status=expected_status)
+
+
+async def request_json(
+    client: httpx.AsyncClient,
+    method: str,
+    path: str,
+    payload: dict | None = None,
+    expected_status: int = 200,
+):
+    response = await client.request(method, path, json=payload)
+    if response.status_code != expected_status:
+        raise AssertionError(
+            f"{method} {path} returned {response.status_code}: {response.text}"
+        )
+    return response.json()
 
 
 if __name__ == "__main__":
