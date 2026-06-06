@@ -12,6 +12,24 @@ from my_agent.web.server import make_handler
 from my_agent.web.service import WebAppService
 
 
+class FakeTopicLLM:
+    def __init__(self):
+        self.prompts: list[str] = []
+
+    def complete(self, prompt: str) -> str:
+        self.prompts.append(prompt)
+        return json.dumps(
+            {
+                "title": "HTTP 精炼主题",
+                "tags": ["创业产品"],
+                "discussion_task": "通过 HTTP 精炼后的讨论任务。",
+                "source_summary": "HTTP topic refine smoke。",
+                "clarification_questions": [],
+            },
+            ensure_ascii=False,
+        )
+
+
 class WebServerTests(unittest.TestCase):
     def test_api_refine_personas_and_sessions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -38,6 +56,7 @@ categories:
                 db_path=root / "web.sqlite",
                 config_path=root / "config.json",
                 skill_dirs=[root / "skills"],
+                topic_llm_client=FakeTopicLLM(),
             )
             service.bootstrap()
             try:
@@ -53,6 +72,17 @@ categories:
                 base = f"http://127.0.0.1:{server.server_port}"
                 topic = post_json(base + "/api/topic/refine", {"raw_input": "AI 产品怎么做"})
                 self.assertIn("title", topic)
+                clarified = post_json(
+                    base + "/api/topic/refine",
+                    {
+                        "raw_input": "AI 产品怎么做",
+                        "previous_topic": topic,
+                        "clarification_answers": ["更关心 B 端付费验证"],
+                    },
+                )
+                self.assertEqual(clarified["title"], "HTTP 精炼主题")
+                self.assertEqual(clarified["clarification_round"], 1)
+                self.assertEqual(clarified["refinement_source"], "llm")
 
                 personas = get_json(base + "/api/personas")
                 persona_id = personas[0]["id"]

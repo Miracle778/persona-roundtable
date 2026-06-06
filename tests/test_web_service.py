@@ -1,10 +1,29 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
 from my_agent.web.service import WebAppService
+
+
+class FakeTopicLLM:
+    def __init__(self):
+        self.prompts: list[str] = []
+
+    def complete(self, prompt: str) -> str:
+        self.prompts.append(prompt)
+        return json.dumps(
+            {
+                "title": "AI 商业化验证主题",
+                "tags": ["创业产品"],
+                "discussion_task": "围绕 AI 产品商业化验证展开讨论。",
+                "source_summary": "用户补充了付费验证方向。",
+                "clarification_questions": [],
+            },
+            ensure_ascii=False,
+        )
 
 
 class WebAppServiceTests(unittest.TestCase):
@@ -114,6 +133,28 @@ categories:
             archived = service.archive_persona(clone["id"])
             self.assertEqual(archived["archived"], True)
             self.assertEqual([item["id"] for item in service.list_personas()], [source["id"]])
+
+    def test_refine_topic_uses_injected_llm_and_clarification_answers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            topic_llm = FakeTopicLLM()
+            service = WebAppService(
+                db_path=root / "web.sqlite",
+                config_path=root / "config.json",
+                skill_dirs=[root / "skills"],
+                topic_llm_client=topic_llm,
+            )
+
+            card = service.refine_topic(
+                "AI 产品怎么做",
+                clarification_answers=["更关心 B 端付费验证"],
+                previous_topic={"title": "AI 产品机会", "clarification_round": 1},
+            )
+
+            self.assertEqual(card["title"], "AI 商业化验证主题")
+            self.assertEqual(card["clarification_round"], 2)
+            self.assertEqual(card["refinement_source"], "llm")
+            self.assertIn("更关心 B 端付费验证", topic_llm.prompts[0])
 
 
 if __name__ == "__main__":
