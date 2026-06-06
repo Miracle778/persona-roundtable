@@ -10,6 +10,17 @@ InputType = Literal["text", "url", "event_markdown"]
 
 
 @dataclass(frozen=True)
+class BackgroundContext:
+    mode: str
+    triggered: bool
+    reason: str
+    query: str
+    summary: str
+    sources: list[dict[str, Any]] = field(default_factory=list)
+    error: str | None = None
+
+
+@dataclass(frozen=True)
 class NormalizedInput:
     type: InputType
     raw_input: str
@@ -20,6 +31,7 @@ class NormalizedInput:
     author: str | None = None
     comments: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
+    background: BackgroundContext | None = None
 
 
 @dataclass(frozen=True)
@@ -35,6 +47,9 @@ class PersonaSkill:
     not_suitable_for: list[str] = field(default_factory=list)
     triggers: list[str] = field(default_factory=list)
     role_rules: str = ""
+    voice_style: dict[str, Any] = field(default_factory=dict)
+    visual_style: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

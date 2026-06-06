@@ -14,13 +14,92 @@ def build_run_id() -> str:
 
 
 class DiscussionRecorder:
-    def save(self, run: DiscussionRun) -> tuple[Path, Path]:
+    def save(self, run: DiscussionRun) -> tuple[Path, Path, Path]:
         run.output_dir.mkdir(parents=True, exist_ok=True)
         json_path = run.output_dir / "discussion.json"
         html_path = run.output_dir / "discussion.html"
+        script_path = run.output_dir / "script.json"
         json_path.write_text(json.dumps(run.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+        script_path.write_text(json.dumps(build_script(run), ensure_ascii=False, indent=2), encoding="utf-8")
         html_path.write_text(render_html(run), encoding="utf-8")
-        return json_path, html_path
+        return json_path, html_path, script_path
+
+
+def build_script(run: DiscussionRun) -> dict:
+    agent_id_to_name = {
+        selection.skill.id: selection.skill.display_name
+        for selection in run.selected_agents
+    }
+    scenes: list[dict] = [
+        {
+            "type": "host_intro",
+            "speaker": "主持人",
+            "text": build_host_intro(run),
+            "emotion": "开场、提起兴趣",
+            "duration_hint": estimate_duration(build_host_intro(run)),
+        }
+    ]
+    for item in run.utterances:
+        reply_names = [
+            agent_id_to_name.get(agent_id, agent_id)
+            for agent_id in item.reply_to
+            if agent_id != item.agent_id
+        ]
+        scenes.append(
+            {
+                "type": "dialogue",
+                "round_index": item.round_index,
+                "speaker": item.agent_name,
+                "reply_to": reply_names,
+                "reply_to_name": "、".join(dict.fromkeys(reply_names)),
+                "text": item.content,
+                "emotion": infer_emotion(item.content, run.style),
+                "duration_hint": estimate_duration(item.content),
+            }
+        )
+    scenes.append(
+        {
+            "type": "host_summary",
+            "speaker": "主持人",
+            "text": run.summary,
+            "emotion": "收束、提炼观点",
+            "duration_hint": estimate_duration(run.summary),
+        }
+    )
+    return {
+        "run_id": run.run_id,
+        "style": run.style,
+        "title": run.input.title or run.input.raw_input[:60],
+        "source_url": run.input.source_url,
+        "event_markdown_path": run.input.metadata.get("event_markdown_path"),
+        "detected_categories": run.detected_categories,
+        "agents": [selection.skill.display_name for selection in run.selected_agents],
+        "scenes": scenes,
+    }
+
+
+def build_host_intro(run: DiscussionRun) -> str:
+    title = run.input.title or run.input.raw_input[:80] or "这个问题"
+    if run.style == "show":
+        return f"今天这桌聊「{title}」。先把事件摆上桌，再看几位嘉宾怎么拆。"
+    return f"本次讨论围绕「{title}」展开，先梳理不同人物视角，再收束为行动建议。"
+
+
+def estimate_duration(text: str) -> int:
+    compact = re.sub(r"\s+", "", text)
+    return max(4, min(90, round(len(compact) / 5)))
+
+
+def infer_emotion(text: str, style: str) -> str:
+    if style == "show":
+        if any(mark in text for mark in ["？", "?", "反过来", "问题来了"]):
+            return "质疑、接话"
+        if any(mark in text for mark in ["哈哈", "离谱", "啊对对对", "别急"]):
+            return "吐槽、轻松"
+        return "口语、推进观点"
+    if any(mark in text for mark in ["风险", "成本", "代价"]):
+        return "审慎、分析"
+    return "理性、说明"
 
 
 def render_html(run: DiscussionRun) -> str:
@@ -53,6 +132,7 @@ def render_html(run: DiscussionRun) -> str:
         round_parts.append(block)
     round_blocks = "\n".join(round_parts)
     source = format_source(run)
+    event_journey = render_event_journey(run)
     input_title = run.input.title or ("手动输入问题" if run.input.type == "text" else "链接内容")
     total_rounds = max((item.round_index for item in run.utterances), default=0)
     page_label = "本期欢乐圆桌" if run.style == "show" else "本期圆桌讨论"
@@ -187,6 +267,21 @@ def render_html(run: DiscussionRun) -> str:
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 12px;
     }}
+    .journey {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }}
+    .journey-step {{
+      min-height: 92px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfbfa;
+    }}
+    .journey-step strong {{ display: block; margin-bottom: 6px; color: var(--ink); }}
+    .journey-step span {{ color: var(--muted); font-size: 13px; }}
     .cast-card {{
       display: flex;
       gap: 12px;
@@ -428,6 +523,8 @@ def render_html(run: DiscussionRun) -> str:
       </details>
     </section>
 
+    {event_journey}
+
     <h2>角色阵容</h2>
     <section class="cast-grid">{agent_items}</section>
 
@@ -593,6 +690,43 @@ def render_utterance(item, color_map: dict[str, str], agent_id_to_name: dict[str
       </div>
     </article>
     """
+
+
+def render_event_journey(run: DiscussionRun) -> str:
+    metadata = run.input.metadata or {}
+    topic = metadata.get("topic_brief") or metadata.get("topic_angle") or ""
+    background = metadata.get("background_context") or {}
+    event_path = metadata.get("event_markdown_path")
+    steps = [
+        ("输入", format_source(run)),
+        ("事件稿", event_path or "本次未保存事件稿"),
+        ("选题判断", compact_for_html(topic or "已根据正文和评论生成基础选题判断。", 120)),
+        ("背景补全", background_status(background)),
+        ("人物入场", "、".join(selection.skill.display_name for selection in run.selected_agents)),
+    ]
+    cards = "\n".join(
+        f'<div class="journey-step"><strong>{escape(title)}</strong><span>{escape(text)}</span></div>'
+        for title, text in steps
+    )
+    return f"""
+    <h2>选题生成过程</h2>
+    <section class="journey">{cards}</section>
+    """
+
+
+def background_status(background: object) -> str:
+    if not isinstance(background, dict) or not background:
+        return "未触发背景补全"
+    if background.get("error"):
+        return f"已尝试补全，失败原因：{background.get('error')}"
+    return f"已补全：{len(background.get('sources') or [])} 个来源"
+
+
+def compact_for_html(text: str, limit: int) -> str:
+    normalized = " ".join(str(text).split())
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[: limit - 1] + "…"
 
 
 def format_source(run: DiscussionRun) -> str:
