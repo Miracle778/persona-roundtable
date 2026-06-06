@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from contextlib import contextmanager
 from pathlib import Path
+from collections.abc import Iterator
 from typing import Any, Iterable
 
 from my_agent.core.llm import OpenAICompatibleClient
@@ -15,6 +16,7 @@ from my_agent.web.config import (
     save_config,
 )
 from my_agent.web.db import (
+    add_session_personas as db_add_session_personas,
     archive_persona as db_archive_persona,
     assign_persona_model as db_assign_persona_model,
     clone_persona as db_clone_persona,
@@ -191,7 +193,30 @@ class WebAppService:
             raise RuntimeError(f"创建会话失败：{session_id}")
         return session
 
+    def add_session_personas(self, session_id: str, persona_ids: list[str]) -> dict[str, Any]:
+        with self.connection() as conn:
+            changed = db_add_session_personas(conn, session_id, persona_ids)
+            if changed is None:
+                raise ValueError(f"找不到会话：{session_id}")
+            session = get_session(conn, session_id)
+        if not session:
+            raise RuntimeError(f"读取会话失败：{session_id}")
+        return session
+
     def continue_session(self, session_id: str, user_message: str) -> dict[str, Any]:
+        updated: dict[str, Any] | None = None
+        for event in self.continue_session_events(session_id, user_message):
+            if event["type"] == "done":
+                updated = event["session"]
+        if not updated:
+            raise RuntimeError(f"读取会话失败：{session_id}")
+        return updated
+
+    def continue_session_events(
+        self,
+        session_id: str,
+        user_message: str,
+    ) -> Iterator[dict[str, Any]]:
         provider_id, model = self.default_model()
         config = self.get_config(masked=False)
         with self.connection() as conn:
@@ -207,6 +232,16 @@ class WebAppService:
                 provider_id=provider_id,
                 model=model,
             )
+            yield {
+                "type": "message",
+                "message": {
+                    "role": "user",
+                    "speaker": "你",
+                    "content": user_message,
+                    "provider_id": provider_id,
+                    "model": model,
+                },
+            }
             personas = session.get("personas") or []
             round_index = next_round_index(session.get("messages") or [])
             for persona in personas:
@@ -238,10 +273,25 @@ class WebAppService:
                     latency_ms=latency_ms,
                     error=error,
                 )
+                yield {
+                    "type": "message",
+                    "message": {
+                        "role": "persona",
+                        "speaker": persona["display_name_snapshot"],
+                        "content": reply,
+                        "persona_id": persona["persona_id"],
+                        "round_index": round_index,
+                        "provider_id": actual_provider,
+                        "model": actual_model,
+                        "total_tokens": 0,
+                        "latency_ms": latency_ms,
+                        "error": error,
+                    },
+                }
             updated = get_session(conn, session_id)
-        if not updated:
-            raise RuntimeError(f"读取会话失败：{session_id}")
-        return updated
+            if not updated:
+                raise RuntimeError(f"读取会话失败：{session_id}")
+            yield {"type": "done", "session": updated}
 
     def default_model(self) -> tuple[str | None, str | None]:
         config = load_config(self.config_path)

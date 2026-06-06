@@ -347,6 +347,65 @@ def create_session(
     return session_id
 
 
+def add_session_personas(
+    conn: sqlite3.Connection,
+    session_id: str,
+    persona_ids: list[str],
+) -> int | None:
+    ensure_schema(conn)
+    session = conn.execute("select id from sessions where id = ?", (session_id,)).fetchone()
+    if not session:
+        return None
+    existing = {
+        row["persona_id"]
+        for row in conn.execute(
+            "select persona_id from session_personas where session_id = ?",
+            (session_id,),
+        ).fetchall()
+    }
+    max_position = conn.execute(
+        "select max(position) as max_position from session_personas where session_id = ?",
+        (session_id,),
+    ).fetchone()["max_position"]
+    position = int(max_position if max_position is not None else -1) + 1
+    changed = 0
+    for persona_id in persona_ids:
+        if persona_id in existing:
+            continue
+        persona = conn.execute(
+            "select * from personas where id = ? and archived_at is null",
+            (persona_id,),
+        ).fetchone()
+        if not persona:
+            continue
+        conn.execute(
+            """
+            insert into session_personas (
+              session_id, persona_id, display_name_snapshot, prompt_snapshot,
+              provider_id_snapshot, model_snapshot, position
+            ) values (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                session_id,
+                persona_id,
+                persona["display_name"],
+                persona["prompt"],
+                persona["provider_id"],
+                persona["model"],
+                position,
+            ),
+        )
+        existing.add(persona_id)
+        position += 1
+        changed += 1
+    conn.execute(
+        "update sessions set updated_at = ? where id = ?",
+        (now_iso(), session_id),
+    )
+    conn.commit()
+    return changed
+
+
 def record_message(
     conn: sqlite3.Connection,
     session_id: str,

@@ -8,106 +8,206 @@
 </head>
 <body>
   <main class="app-shell">
+    <header class="app-header">
+      <strong class="app-title">🎭 爆梗圆桌</strong>
+      <span class="app-subtitle">让不同角色把严肃话题聊得有梗</span>
+    </header>
+
+    <div class="app-body">
     <aside class="history-pane">
       <header class="pane-head">
-        <strong>会话</strong>
-        <button id="refreshSessions" type="button">刷新</button>
+        <strong>📜 话题历史</strong>
+        <button id="refreshSessions" type="button" class="ghost">刷新</button>
       </header>
       <label class="search-row">
         <span>搜索</span>
-        <input id="sessionSearch" type="search" placeholder="主题、标签、发言" />
+        <input id="sessionSearch" type="search" placeholder="搜个话题一起聊..." />
       </label>
       <nav id="sessionList" class="session-list" aria-label="历史会话"></nav>
+      <footer class="history-footer">
+        <button id="newDiscussion" type="button" class="primary">新建讨论</button>
+        <button id="openSettings" type="button" class="secondary">设置</button>
+      </footer>
     </aside>
 
     <section class="conversation-pane">
-      <header class="topic-editor">
+      <section id="conversationEmpty" class="conversation-empty">
+        <strong>选择历史会话，或新建一场讨论</strong>
+        <span>中间区域会在新建讨论后展开精炼主题和话题卡。</span>
+        <button id="startDiscussion" type="button" class="primary">新建讨论</button>
+      </section>
+
+      <header id="topicEditor" class="topic-editor hidden">
         <label>
           <span>原始输入</span>
-          <textarea id="rawInput" rows="3" placeholder="输入想讨论的内容、话题或链接"></textarea>
+          <textarea id="rawInput" rows="3" placeholder="抛个话题，大家一起聊..."></textarea>
         </label>
         <div class="toolbar">
-          <button id="refineTopic" type="button">精炼主题</button>
-          <button id="createSession" type="button">开始讨论</button>
+          <button id="refineTopic" type="button" class="primary">精炼主题</button>
+          <button id="createSession" type="button" class="secondary">开始讨论</button>
         </div>
+        <section class="discussion-persona-picker" aria-label="本场角色">
+          <div class="topic-card-head">
+            <strong>本场角色</strong>
+            <span id="draftPersonaCount" class="status-chip">0 位</span>
+          </div>
+          <div id="discussionPersonaList" class="persona-list compact-persona-list"></div>
+        </section>
         <section id="topicCard" class="topic-card hidden" aria-label="话题卡">
-          <label>
-            <span>主题</span>
-            <input id="topicTitle" />
-          </label>
-          <label>
-            <span>标签</span>
-            <input id="topicTags" />
-          </label>
-          <label>
-            <span>讨论任务</span>
-            <textarea id="topicTask" rows="3"></textarea>
-          </label>
-          <div id="topicQuestions" class="clarification-list"></div>
-          <div id="clarificationBox" class="clarification-box hidden">
+          <div class="topic-card-head">
+            <strong>话题卡</strong>
+            <div class="topic-card-actions">
+              <span id="topicSource" class="status-chip">未精炼</span>
+              <button id="toggleTopicCard" type="button" class="ghost">展开</button>
+            </div>
+          </div>
+          <div id="topicCompact" class="topic-compact"></div>
+          <div id="topicTagRow" class="topic-tag-row" aria-label="话题标签"></div>
+          <div class="topic-card-detail">
             <label>
-              <span>澄清回答</span>
-              <textarea id="clarificationAnswer" rows="2" placeholder="回答上面的问题后继续精炼"></textarea>
+              <span>主题</span>
+              <input id="topicTitle" />
             </label>
-            <div class="toolbar">
-              <button id="continueRefine" type="button">继续精炼</button>
-              <button id="skipClarification" type="button">跳过澄清</button>
+            <label>
+              <span>标签</span>
+              <input id="topicTags" />
+            </label>
+            <label>
+              <span>讨论任务</span>
+              <textarea id="topicTask" rows="3"></textarea>
+            </label>
+            <div id="topicQuestions" class="clarification-list"></div>
+            <div id="clarificationBox" class="clarification-box hidden">
+              <div id="clarificationAnswers" class="clarification-answers"></div>
+              <div class="toolbar">
+                <button id="continueRefine" type="button" class="primary">继续精炼</button>
+                <button id="skipClarification" type="button" class="secondary">跳过澄清</button>
+              </div>
             </div>
           </div>
         </section>
       </header>
 
-      <section id="messageList" class="message-list" aria-label="讨论消息"></section>
+      <section id="sessionTopicSummary" class="session-topic-summary hidden">
+        <div id="sessionTopicContent"></div>
+        <div class="toolbar">
+          <button id="sessionAddPersona" type="button" class="secondary">添加角色</button>
+        </div>
+        <div id="sessionPersonaPicker" class="session-persona-picker hidden">
+          <div id="sessionPersonaList" class="persona-list compact-persona-list"></div>
+          <div class="toolbar">
+            <button id="confirmSessionPersonas" type="button" class="primary">加入本场</button>
+            <button id="cancelSessionPersonas" type="button" class="ghost">取消</button>
+          </div>
+        </div>
+      </section>
+      <section id="messageList" class="message-list hidden" aria-label="讨论消息"></section>
 
-      <form id="messageForm" class="message-form">
-        <textarea id="messageInput" rows="2" placeholder="继续输入"></textarea>
-        <button type="submit">发送</button>
+      <form id="messageForm" class="message-form hidden">
+        <textarea id="messageInput" rows="2" placeholder="围绕本场主题继续补充观点、追问或抛个梗..."></textarea>
+        <span id="messageStatus" class="message-status" aria-live="polite"></span>
+        <button id="sendMessage" type="submit" class="primary">发送</button>
       </form>
     </section>
 
     <aside class="control-pane">
       <section>
         <header class="pane-head">
-          <strong>角色</strong>
-          <button id="assignModel" type="button">分配模型</button>
+          <strong>🎭 本场嘉宾</strong>
+          <span id="personaCount" class="status-chip">0 位</span>
         </header>
-        <div class="model-picker">
-          <select id="providerSelect"></select>
-          <select id="modelSelect"></select>
-        </div>
         <div id="personaList" class="persona-list" aria-label="角色列表"></div>
-        <form id="personaForm" class="persona-editor">
-          <label>
-            <span>角色名</span>
-            <input id="personaName" />
-          </label>
-          <label>
-            <span>说明</span>
-            <input id="personaDescription" />
-          </label>
-          <label>
-            <span>标签</span>
-            <input id="personaCategories" />
-          </label>
-          <label>
-            <span>Persona Prompt</span>
-            <textarea id="personaPrompt" rows="8" spellcheck="false"></textarea>
-          </label>
-          <div class="toolbar">
-            <button id="savePersona" type="submit">保存副本</button>
-            <button id="clonePersona" type="button">新增副本</button>
-            <button id="archivePersona" type="button">归档</button>
-          </div>
-        </form>
       </section>
+    </aside>
+    </div>
 
-      <section class="config-section">
-        <header class="pane-head">
-          <strong>Provider</strong>
-          <button id="saveConfig" type="button">保存</button>
-        </header>
-        <textarea id="configJson" rows="12" spellcheck="false"></textarea>
-      </section>
+    <div id="settingsOverlay" class="settings-overlay hidden"></div>
+    <aside id="settingsDrawer" class="settings-drawer hidden" aria-label="设置">
+      <header class="settings-head">
+        <strong>讨论设置</strong>
+        <button id="closeSettings" type="button" class="ghost">关闭</button>
+      </header>
+      <div class="settings-layout">
+        <nav id="settingsMenu" class="settings-menu" aria-label="设置菜单">
+          <button type="button" class="active" data-settings-tab="providers">添加 LLM Provider</button>
+          <button type="button" data-settings-tab="personas">角色管理</button>
+          <button type="button" data-settings-tab="config">系统配置</button>
+        </nav>
+
+        <div class="settings-content">
+          <section id="providerSettingsPanel" class="settings-panel" data-settings-panel="providers">
+            <header class="pane-head">
+              <strong>LLM Provider</strong>
+            </header>
+            <form id="providerForm" class="provider-form">
+              <label>
+                <span>Provider ID</span>
+                <input id="providerId" placeholder="openai" />
+              </label>
+              <label>
+                <span>名称</span>
+                <input id="providerName" placeholder="OpenAI" />
+              </label>
+              <label>
+                <span>Base URL</span>
+                <input id="providerBaseUrl" placeholder="https://api.openai.com/v1" />
+              </label>
+              <label>
+                <span>API Key</span>
+                <input id="providerApiKey" type="password" placeholder="sk-..." />
+              </label>
+              <label>
+                <span>模型列表</span>
+                <input id="providerModels" placeholder="gpt-4.1, gpt-4o-mini" />
+              </label>
+              <button id="addProvider" type="submit" class="primary">添加 Provider</button>
+            </form>
+          </section>
+
+          <section id="personaManagePanel" class="settings-panel hidden" data-settings-panel="personas">
+            <header class="pane-head">
+              <strong>角色管理</strong>
+              <button id="assignModel" type="button" class="secondary">分配模型</button>
+            </header>
+            <div class="model-picker">
+              <select id="providerSelect"></select>
+              <select id="modelSelect"></select>
+            </div>
+            <div id="personaManageList" class="persona-list persona-manage-list" aria-label="角色管理"></div>
+            <form id="personaForm" class="persona-editor">
+              <label>
+                <span>角色名</span>
+                <input id="personaName" />
+              </label>
+              <label>
+                <span>说明</span>
+                <input id="personaDescription" />
+              </label>
+              <label>
+                <span>标签</span>
+                <input id="personaCategories" />
+              </label>
+              <label>
+                <span>Persona Prompt</span>
+                <textarea id="personaPrompt" rows="8" spellcheck="false"></textarea>
+              </label>
+              <div class="toolbar">
+                <button id="savePersona" type="submit" class="primary">保存副本</button>
+                <button id="clonePersona" type="button" class="secondary">新增副本</button>
+                <button id="archivePersona" type="button" class="ghost">归档</button>
+              </div>
+            </form>
+          </section>
+
+          <section id="configSettingsPanel" class="settings-panel hidden" data-settings-panel="config">
+            <header class="pane-head">
+              <strong>系统配置</strong>
+              <button id="saveConfig" type="button" class="secondary">保存</button>
+            </header>
+            <textarea id="configJson" rows="12" spellcheck="false"></textarea>
+          </section>
+        </div>
+      </div>
     </aside>
   </main>
   <script src="/app.js"></script>

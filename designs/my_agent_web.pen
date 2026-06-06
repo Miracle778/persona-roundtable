@@ -1,0 +1,3383 @@
+{
+  "version": "2.13",
+  "children": [
+    {
+      "type": "frame",
+      "id": "B9avu0",
+      "x": -508,
+      "y": -309,
+      "name": "AgentGuard Console Home",
+      "clip": true,
+      "width": 1440,
+      "height": 1000,
+      "fill": "#F7F9FC",
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "g6UHV",
+          "x": 952,
+          "y": 422,
+          "name": "Policy and Identity Panels Work Area",
+          "width": 392,
+          "height": 488,
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "ZmXS1",
+              "name": "Policy Status Panel",
+              "width": "fill_container",
+              "height": 240,
+              "fill": "#FFFFFF",
+              "cornerRadius": 8,
+              "stroke": "#D8DDEA",
+              "strokeWidth": 1,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#1F2A4414",
+                "offset": {
+                  "x": 0,
+                  "y": 8
+                },
+                "blur": 22
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "bYntI",
+                  "name": "Policy Header",
+                  "width": "fill_container",
+                  "height": 42,
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "MMQdC",
+                      "name": "Policy Title Group",
+                      "width": 230,
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "qCkTT",
+                          "name": "Policy Title",
+                          "fill": "#111827",
+                          "content": "策略状态",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Pn8Vu",
+                          "name": "Policy Subtitle",
+                          "fill": "#5B6472",
+                          "content": "AgentGuard 安全网关 · 实时生效",
+                          "fontFamily": "Geist",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "u7KBf",
+                      "name": "Enforcement Badge",
+                      "fill": "#EEF2FF",
+                      "cornerRadius": 8,
+                      "gap": 6,
+                      "padding": [
+                        5,
+                        8
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "ellipse",
+                          "id": "sULpV",
+                          "name": "Enforcement Dot",
+                          "fill": "#16A34A",
+                          "width": 6,
+                          "height": 6
+                        },
+                        {
+                          "type": "text",
+                          "id": "Jo4zu",
+                          "name": "Enforcement Label",
+                          "fill": "#635BFF",
+                          "content": "已启用",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "aDGu8",
+                  "name": "Policy Body",
+                  "width": "fill_container",
+                  "height": 92,
+                  "gap": 10,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "zlOBf",
+                      "name": "Gateway Product Still",
+                      "clip": true,
+                      "width": 118,
+                      "height": "fill_container",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1780677984722.png",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 8
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mgPOB",
+                      "name": "Policy Summary",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "layout": "vertical",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "WZ582",
+                          "name": "Policy Score Row",
+                          "width": "fill_container",
+                          "gap": 8,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Q4cLQ9",
+                              "name": "Policy Score",
+                              "fill": "#635BFF",
+                              "content": "98",
+                              "fontFamily": "Geist Mono",
+                              "fontSize": 28,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "y4Ivp",
+                              "name": "Policy Score Unit",
+                              "fill": "#5B6472",
+                              "content": "/100 合规评分",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "bW2QF",
+                          "name": "Policy Summary Copy",
+                          "fill": "#5B6472",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "27 条策略覆盖 186 个 Agent 调用路径，最近 24 小时拦截高风险请求 14 次。",
+                          "lineHeight": 1.35,
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Ihz2z",
+                          "name": "Risk Distribution Rail",
+                          "width": "fill_container",
+                          "height": 8,
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "cornerRadius": 4,
+                              "id": "XuFlO",
+                              "name": "Allowed Segment",
+                              "fill": "#2563EB",
+                              "width": 118,
+                              "height": "fill_container"
+                            },
+                            {
+                              "type": "rectangle",
+                              "cornerRadius": 4,
+                              "id": "B94tJU",
+                              "name": "Review Segment",
+                              "fill": "#D97706",
+                              "width": 38,
+                              "height": "fill_container"
+                            },
+                            {
+                              "type": "rectangle",
+                              "cornerRadius": 4,
+                              "id": "ybI2T",
+                              "name": "Blocked Segment",
+                              "fill": "#DC2626",
+                              "width": "fill_container",
+                              "height": "fill_container"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "NihMK",
+                  "name": "Policy Metric Grid",
+                  "width": "fill_container",
+                  "height": 58,
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "oJ0Lu",
+                      "name": "生效策略 Cell",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "#F7F8FC",
+                      "cornerRadius": 8,
+                      "stroke": "#E6E9F2",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 4,
+                      "padding": [
+                        9,
+                        10
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Ve9mW",
+                          "name": "生效策略 Label",
+                          "fill": "#5B6472",
+                          "content": "生效策略",
+                          "fontFamily": "Geist",
+                          "fontSize": 9,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Z9gmRy",
+                          "name": "生效策略 Value",
+                          "fill": "#635BFF",
+                          "content": "27",
+                          "fontFamily": "Geist Mono",
+                          "fontSize": 18,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "K9bA8",
+                      "name": "覆盖率 Cell",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "#F7F8FC",
+                      "cornerRadius": 8,
+                      "stroke": "#E6E9F2",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 4,
+                      "padding": [
+                        9,
+                        10
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "tcUoD",
+                          "name": "覆盖率 Label",
+                          "fill": "#5B6472",
+                          "content": "覆盖率",
+                          "fontFamily": "Geist",
+                          "fontSize": 9,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "k3got",
+                          "name": "覆盖率 Value",
+                          "fill": "#2563EB",
+                          "content": "94%",
+                          "fontFamily": "Geist Mono",
+                          "fontSize": 18,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Z6nHf",
+                      "name": "待审批 Cell",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "#F7F8FC",
+                      "cornerRadius": 8,
+                      "stroke": "#E6E9F2",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 4,
+                      "padding": [
+                        9,
+                        10
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "pxQ0U",
+                          "name": "待审批 Label",
+                          "fill": "#5B6472",
+                          "content": "待审批",
+                          "fontFamily": "Geist",
+                          "fontSize": 9,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "H45rZQ",
+                          "name": "待审批 Value",
+                          "fill": "#D97706",
+                          "content": "6",
+                          "fontFamily": "Geist Mono",
+                          "fontSize": 18,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "h91T9w",
+              "name": "Agent Identity Governance Overview",
+              "width": "fill_container",
+              "height": 232,
+              "fill": "#FFFFFF",
+              "cornerRadius": 8,
+              "stroke": "#D8DDEA",
+              "strokeWidth": 1,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#1F2A4414",
+                "offset": {
+                  "x": 0,
+                  "y": 8
+                },
+                "blur": 22
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Z9XVNx",
+                  "name": "Identity Header",
+                  "width": "fill_container",
+                  "height": 42,
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "z0dZx",
+                      "name": "Identity Title Group",
+                      "width": 238,
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "FqE7T",
+                          "name": "Identity Title",
+                          "fill": "#111827",
+                          "content": "Agent 身份治理",
+                          "fontFamily": "Inter",
+                          "fontSize": 15,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "vsHrk",
+                          "name": "Identity Subtitle",
+                          "fill": "#5B6472",
+                          "content": "权限、密钥与风险归属",
+                          "fontFamily": "Geist",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "W3ZpcM",
+                      "name": "Identity Badge",
+                      "fill": "#F0FDF4",
+                      "cornerRadius": 8,
+                      "gap": 6,
+                      "padding": [
+                        5,
+                        8
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "vxENa",
+                          "name": "Shield Check Icon",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "shield",
+                          "library": "lucide",
+                          "fill": "#16A34A"
+                        },
+                        {
+                          "type": "text",
+                          "id": "LS47r",
+                          "name": "Identity Badge Label",
+                          "fill": "#16A34A",
+                          "content": "受控",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "dTFbj",
+                  "name": "Identity Metric Strip",
+                  "width": "fill_container",
+                  "height": 52,
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "QNTey",
+                      "name": "托管 Agent Tile",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "#FAFBFF",
+                      "cornerRadius": 8,
+                      "stroke": "#E8EBF4",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 3,
+                      "padding": [
+                        8,
+                        9
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "vA6Th",
+                          "name": "托管 Agent Label",
+                          "fill": "#5B6472",
+                          "content": "托管 Agent",
+                          "fontFamily": "Geist",
+                          "fontSize": 9,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "K46Ja",
+                          "name": "托管 Agent Value",
+                          "fill": "#635BFF",
+                          "content": "142",
+                          "fontFamily": "Geist Mono",
+                          "fontSize": 17,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "WjLck",
+                      "name": "特权身份 Tile",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "#FAFBFF",
+                      "cornerRadius": 8,
+                      "stroke": "#E8EBF4",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 3,
+                      "padding": [
+                        8,
+                        9
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "cvvGB",
+                          "name": "特权身份 Label",
+                          "fill": "#5B6472",
+                          "content": "特权身份",
+                          "fontFamily": "Geist",
+                          "fontSize": 9,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "T1hTW6",
+                          "name": "特权身份 Value",
+                          "fill": "#2563EB",
+                          "content": "18",
+                          "fontFamily": "Geist Mono",
+                          "fontSize": 17,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "wHphb",
+                      "name": "异常凭证 Tile",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "#FAFBFF",
+                      "cornerRadius": 8,
+                      "stroke": "#E8EBF4",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 3,
+                      "padding": [
+                        8,
+                        9
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "FMXXw",
+                          "name": "异常凭证 Label",
+                          "fill": "#5B6472",
+                          "content": "异常凭证",
+                          "fontFamily": "Geist",
+                          "fontSize": 9,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "V5Kmsw",
+                          "name": "异常凭证 Value",
+                          "fill": "#DC2626",
+                          "content": "3",
+                          "fontFamily": "Geist Mono",
+                          "fontSize": 17,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "RWf5Y",
+                  "name": "Identity Risk List",
+                  "width": "fill_container",
+                  "height": 92,
+                  "layout": "vertical",
+                  "gap": 5,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "mrfYi",
+                      "name": "Customer Support Agent Row",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 8,
+                      "stroke": "#ECEFF6",
+                      "strokeWidth": 1,
+                      "gap": 8,
+                      "padding": [
+                        7,
+                        9
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "CCMuG",
+                          "name": "Customer Support Agent Avatar",
+                          "width": 24,
+                          "height": 24,
+                          "fill": "#EEF2FF",
+                          "cornerRadius": 8,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "FZ6xn",
+                              "name": "Customer Support Agent Bot Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "server",
+                              "library": "lucide",
+                              "fill": "#635BFF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "p6ZFn",
+                          "name": "Customer Support Agent Details",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 1,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "F8MA4",
+                              "name": "Customer Support Agent Name",
+                              "fill": "#111827",
+                              "content": "Customer Support Agent",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "nEP7K",
+                              "name": "Customer Support Agent Signal",
+                              "fill": "#5B6472",
+                              "content": "OAuth 范围过宽",
+                              "fontFamily": "Geist",
+                              "fontSize": 9,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Jen5c",
+                          "name": "Customer Support Agent Status",
+                          "fill": "#D9770612",
+                          "cornerRadius": 8,
+                          "gap": 4,
+                          "padding": [
+                            4,
+                            6
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "wwrgX",
+                              "name": "Customer Support Agent Status Dot",
+                              "fill": "#D97706",
+                              "width": 5,
+                              "height": 5
+                            },
+                            {
+                              "type": "text",
+                              "id": "kh84o",
+                              "name": "Customer Support Agent Status Label",
+                              "fill": "#D97706",
+                              "content": "需复核",
+                              "fontFamily": "Inter",
+                              "fontSize": 9,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "XgqP2",
+                      "name": "Code Review Agent Row",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 8,
+                      "stroke": "#ECEFF6",
+                      "strokeWidth": 1,
+                      "gap": 8,
+                      "padding": [
+                        7,
+                        9
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "K9fjpq",
+                          "name": "Code Review Agent Avatar",
+                          "width": 24,
+                          "height": 24,
+                          "fill": "#EEF2FF",
+                          "cornerRadius": 8,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "O99nt2",
+                              "name": "Code Review Agent Bot Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "server",
+                              "library": "lucide",
+                              "fill": "#635BFF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "IPUkG",
+                          "name": "Code Review Agent Details",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 1,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "aRAE4",
+                              "name": "Code Review Agent Name",
+                              "fill": "#111827",
+                              "content": "Code Review Agent",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "rC8B3",
+                              "name": "Code Review Agent Signal",
+                              "fill": "#5B6472",
+                              "content": "密钥 4 小时后轮换",
+                              "fontFamily": "Geist",
+                              "fontSize": 9,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "v13iwH",
+                          "name": "Code Review Agent Status",
+                          "fill": "#16A34A12",
+                          "cornerRadius": 8,
+                          "gap": 4,
+                          "padding": [
+                            4,
+                            6
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "dAd3B",
+                              "name": "Code Review Agent Status Dot",
+                              "fill": "#16A34A",
+                              "width": 5,
+                              "height": 5
+                            },
+                            {
+                              "type": "text",
+                              "id": "lcBq7",
+                              "name": "Code Review Agent Status Label",
+                              "fill": "#16A34A",
+                              "content": "正常",
+                              "fontFamily": "Inter",
+                              "fontSize": 9,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "f0tsHe",
+                      "name": "Finance Ops Agent Row",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 8,
+                      "stroke": "#ECEFF6",
+                      "strokeWidth": 1,
+                      "gap": 8,
+                      "padding": [
+                        7,
+                        9
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "E6wrx5",
+                          "name": "Finance Ops Agent Avatar",
+                          "width": 24,
+                          "height": 24,
+                          "fill": "#EEF2FF",
+                          "cornerRadius": 8,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "eeulv",
+                              "name": "Finance Ops Agent Bot Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "server",
+                              "library": "lucide",
+                              "fill": "#635BFF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "AWCOf",
+                          "name": "Finance Ops Agent Details",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 1,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Oyn5C",
+                              "name": "Finance Ops Agent Name",
+                              "fill": "#111827",
+                              "content": "Finance Ops Agent",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "lJtf1",
+                              "name": "Finance Ops Agent Signal",
+                              "fill": "#5B6472",
+                              "content": "跨域工具调用激增",
+                              "fontFamily": "Geist",
+                              "fontSize": 9,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "F58BXe",
+                          "name": "Finance Ops Agent Status",
+                          "fill": "#DC262612",
+                          "cornerRadius": 8,
+                          "gap": 4,
+                          "padding": [
+                            4,
+                            6
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "dWKGB",
+                              "name": "Finance Ops Agent Status Dot",
+                              "fill": "#DC2626",
+                              "width": 5,
+                              "height": 5
+                            },
+                            {
+                              "type": "text",
+                              "id": "W4DdO",
+                              "name": "Finance Ops Agent Status Label",
+                              "fill": "#DC2626",
+                              "content": "限制中",
+                              "fontFamily": "Inter",
+                              "fontSize": 9,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "L6bc1z",
+          "x": 0,
+          "y": 0,
+          "name": "Left Navigation",
+          "width": 256,
+          "height": 1000,
+          "fill": "$nav-dark",
+          "layout": "vertical",
+          "gap": 28,
+          "padding": [
+            28,
+            20,
+            24,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "D4mBl",
+              "name": "Brand",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "PTCtZ",
+                  "name": "AgentGuard Mark",
+                  "width": 38,
+                  "height": 38,
+                  "fill": "#635BFF",
+                  "cornerRadius": 8,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "C1IY9Y",
+                      "x": 0,
+                      "y": 0,
+                      "width": 22,
+                      "height": 22,
+                      "library": "Material Symbols Rounded"
+                    },
+                    {
+                      "type": "path",
+                      "id": "EKGHG",
+                      "x": 9,
+                      "y": 7,
+                      "name": "AgentGuard Shield Mark",
+                      "geometry": "M12 2l9 4v6c0 5-3.5 8.5-9 10-5.5-1.5-9-5-9-10v-6z m-4 10l3 3 6-6",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "fill": "#00000000",
+                      "width": 20,
+                      "height": 23,
+                      "stroke": "#FFFFFF",
+                      "strokeWidth": 2.2,
+                      "strokeLinejoin": "round",
+                      "strokeLinecap": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "c7WUdp",
+                  "name": "Brand Text",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "XQv5v",
+                      "name": "Product Name",
+                      "fill": "#FFFFFF",
+                      "content": "AgentGuard",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "K84PI4",
+                      "name": "Product Tier",
+                      "fill": "#A6B0C3",
+                      "content": "AI Security Gateway",
+                      "fontFamily": "Geist",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "cX8L8",
+              "name": "Primary Navigation",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "bnS2v",
+                  "name": "Nav Item Overview",
+                  "width": "fill_container",
+                  "height": 40,
+                  "fill": "#24304A",
+                  "cornerRadius": 6,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "J70kW",
+                      "width": 18,
+                      "height": 18,
+                      "library": "Material Symbols Rounded"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ffTlq",
+                      "name": "Overview Label",
+                      "fill": "#FFFFFF",
+                      "content": "Overview",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "K5f9ki",
+                  "name": "Nav Item Agents",
+                  "width": "fill_container",
+                  "height": 40,
+                  "fill": "#101828",
+                  "cornerRadius": 6,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "Nz9td",
+                      "width": 18,
+                      "height": 18,
+                      "library": "Material Symbols Rounded"
+                    },
+                    {
+                      "type": "text",
+                      "id": "C200VI",
+                      "name": "Agents Label",
+                      "fill": "#CBD5E1",
+                      "content": "Agents",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "F8o9wg",
+                  "name": "Nav Item Identity",
+                  "width": "fill_container",
+                  "height": 40,
+                  "fill": "#101828",
+                  "cornerRadius": 6,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "vOLIP",
+                      "width": 18,
+                      "height": 18,
+                      "library": "Material Symbols Rounded"
+                    },
+                    {
+                      "type": "text",
+                      "id": "jUJIo",
+                      "name": "Identity Label",
+                      "fill": "#CBD5E1",
+                      "content": "Identity",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "AS5JG",
+                  "name": "Nav Item Risk Controls",
+                  "width": "fill_container",
+                  "height": 40,
+                  "fill": "#101828",
+                  "cornerRadius": 6,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "B72yUP",
+                      "width": 18,
+                      "height": 18,
+                      "library": "Material Symbols Rounded"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Occt4",
+                      "name": "Risk Controls Label",
+                      "fill": "#CBD5E1",
+                      "content": "Risk Controls",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "TKUUk",
+                  "name": "Nav Item Policies",
+                  "width": "fill_container",
+                  "height": 40,
+                  "fill": "#101828",
+                  "cornerRadius": 6,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "agABN",
+                      "width": 18,
+                      "height": 18,
+                      "library": "Material Symbols Rounded"
+                    },
+                    {
+                      "type": "text",
+                      "id": "QP7rN",
+                      "name": "Policies Label",
+                      "fill": "#CBD5E1",
+                      "content": "Policies",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "L03bI",
+                  "name": "Nav Item Audit Logs",
+                  "width": "fill_container",
+                  "height": 40,
+                  "fill": "#101828",
+                  "cornerRadius": 6,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "yZd9m",
+                      "width": 18,
+                      "height": 18,
+                      "library": "Material Symbols Rounded"
+                    },
+                    {
+                      "type": "text",
+                      "id": "glLsa",
+                      "name": "Audit Logs Label",
+                      "fill": "#CBD5E1",
+                      "content": "Audit Logs",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "XJORQ",
+                  "name": "Nav Item Integrations",
+                  "width": "fill_container",
+                  "height": 40,
+                  "fill": "#101828",
+                  "cornerRadius": 6,
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "HnrBt",
+                      "width": 18,
+                      "height": 18,
+                      "library": "Material Symbols Rounded"
+                    },
+                    {
+                      "type": "text",
+                      "id": "p7RO0",
+                      "name": "Integrations Label",
+                      "fill": "#CBD5E1",
+                      "content": "Integrations",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "vsx2V",
+              "name": "Navigation Spacer",
+              "width": "fill_container",
+              "height": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "jVqYu",
+              "name": "Gateway Health Summary",
+              "width": "fill_container",
+              "fill": "#18233A",
+              "cornerRadius": 8,
+              "stroke": "#344054",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Q76eM",
+                  "name": "Gateway Health Label",
+                  "fill": "#A6B0C3",
+                  "content": "Gateway health",
+                  "fontFamily": "Geist",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "HcgQ8",
+                  "name": "Health State Row",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "Oc5d7",
+                      "name": "Health Online Dot",
+                      "fill": "#22C55E",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "text",
+                      "id": "twah4",
+                      "name": "Health Online Text",
+                      "fill": "#FFFFFF",
+                      "content": "All regions enforcing",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "z2NrV",
+                  "name": "Health Detail",
+                  "fill": "#94A3B8",
+                  "content": "p95 latency 184ms · 12 gateways",
+                  "fontFamily": "Geist",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "fQy0g",
+          "x": 256,
+          "y": 0,
+          "name": "Main Workspace",
+          "width": 1184,
+          "height": 1000,
+          "fill": "$surface-muted",
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "Pa0YE",
+              "x": 0,
+              "y": 0,
+              "name": "Top Bar",
+              "width": 1184,
+              "height": 76,
+              "fill": "$surface",
+              "stroke": "$border",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "padding": [
+                0,
+                32
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "yW5u3",
+                  "name": "Page Header",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "foMhw",
+                      "name": "Page Title",
+                      "fill": "$text-primary",
+                      "content": "AI Security Gateway Overview",
+                      "fontFamily": "Inter",
+                      "fontSize": 22,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "zAcCg",
+                      "name": "Page Subtitle",
+                      "fill": "$text-secondary",
+                      "content": "Monitor agent identities, permission drift, risky calls and enforcement posture.",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qIGvI",
+                  "name": "Top Actions",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "VdFcq",
+                      "name": "Search Agents",
+                      "width": 250,
+                      "height": 38,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 6,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        12
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "KMacR",
+                          "width": 0,
+                          "height": 0,
+                          "icon": "search",
+                          "library": "Material Symbols Outlined",
+                          "fill": "#64748B"
+                        },
+                        {
+                          "type": "text",
+                          "id": "CrMSp",
+                          "name": "Search Placeholder",
+                          "fill": "$text-muted",
+                          "content": "Search agents, policies, logs",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "M3nEla",
+                      "name": "Export Button",
+                      "height": 38,
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 6,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "ToSdl",
+                          "width": 0,
+                          "height": 0,
+                          "icon": "download",
+                          "library": "Material Symbols Outlined",
+                          "fill": "$text-secondary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "h7Ck2",
+                          "name": "Export Label",
+                          "fill": "$text-primary",
+                          "content": "Export",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "QH7ed",
+                      "name": "New Policy Button",
+                      "height": 38,
+                      "fill": "$accent",
+                      "cornerRadius": 6,
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "ui9Vo",
+                          "width": 0,
+                          "height": 0,
+                          "icon": "add",
+                          "library": "Material Symbols Outlined",
+                          "fill": "#FFFFFF"
+                        },
+                        {
+                          "type": "text",
+                          "id": "xCc2O",
+                          "name": "New Policy Label",
+                          "fill": "#FFFFFF",
+                          "content": "New policy",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "K2eLL",
+              "x": 32,
+              "y": 104,
+              "name": "Dashboard Content",
+              "width": 1120,
+              "height": 850,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "quvbH",
+                  "x": 0,
+                  "y": 0,
+                  "name": "KPI Cards",
+                  "width": 1120,
+                  "height": 128,
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Ut86K",
+                      "name": "KPI Protected agent calls",
+                      "width": "fill_container",
+                      "height": 128,
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 8,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "eAeIo",
+                          "name": "Protected agent calls Header",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "rX5N5",
+                              "name": "Protected agent calls Label",
+                              "fill": "$text-secondary",
+                              "content": "Protected agent calls",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "U6P0d",
+                              "name": "Protected agent calls Icon Box",
+                              "width": 30,
+                              "height": 30,
+                              "fill": "#2563EB14",
+                              "cornerRadius": 6,
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "yKmSM",
+                                  "name": "Protected agent calls Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "route",
+                                  "library": "Material Symbols Outlined",
+                                  "fill": "#2563EB"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "Jv88G",
+                          "name": "Protected agent calls Value",
+                          "fill": "$text-primary",
+                          "content": "2.84M",
+                          "fontFamily": "Geist Mono",
+                          "fontSize": 28,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "o2hun",
+                          "name": "Protected agent calls Delta",
+                          "fill": "$text-muted",
+                          "content": "+18.6% vs last 7d",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vLdaa",
+                      "name": "KPI High-risk blocks",
+                      "width": "fill_container",
+                      "height": 128,
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 8,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "FiyxH",
+                          "name": "High-risk blocks Header",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "dbnQJ",
+                              "name": "High-risk blocks Label",
+                              "fill": "$text-secondary",
+                              "content": "High-risk blocks",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "w4dWGQ",
+                              "name": "High-risk blocks Icon Box",
+                              "width": 30,
+                              "height": 30,
+                              "fill": "#DC262614",
+                              "cornerRadius": 6,
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "CprI6",
+                                  "name": "High-risk blocks Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "block",
+                                  "library": "Material Symbols Outlined",
+                                  "fill": "#DC2626"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "BdlJW",
+                          "name": "High-risk blocks Value",
+                          "fill": "$text-primary",
+                          "content": "1,247",
+                          "fontFamily": "Geist Mono",
+                          "fontSize": 28,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Jsers",
+                          "name": "High-risk blocks Delta",
+                          "fill": "$text-muted",
+                          "content": "312 prompt injections",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "o84fBS",
+                      "name": "KPI Active agents",
+                      "width": "fill_container",
+                      "height": 128,
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 8,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "qTQVp",
+                          "name": "Active agents Header",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "y0y9D",
+                              "name": "Active agents Label",
+                              "fill": "$text-secondary",
+                              "content": "Active agents",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "G2DrC",
+                              "name": "Active agents Icon Box",
+                              "width": 30,
+                              "height": 30,
+                              "fill": "#635BFF14",
+                              "cornerRadius": 6,
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "K4Uplv",
+                                  "name": "Active agents Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "smart_toy",
+                                  "library": "Material Symbols Outlined",
+                                  "fill": "#635BFF"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "KsD3T",
+                          "name": "Active agents Value",
+                          "fill": "$text-primary",
+                          "content": "438",
+                          "fontFamily": "Geist Mono",
+                          "fontSize": 28,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "L0B8f",
+                          "name": "Active agents Delta",
+                          "fill": "$text-muted",
+                          "content": "36 require review",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "rkQOf",
+                      "name": "KPI Policy coverage",
+                      "width": "fill_container",
+                      "height": 128,
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 8,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "EXYeu",
+                          "name": "Policy coverage Header",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "KKE5I",
+                              "name": "Policy coverage Label",
+                              "fill": "$text-secondary",
+                              "content": "Policy coverage",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "OYTdb",
+                              "name": "Policy coverage Icon Box",
+                              "width": 30,
+                              "height": 30,
+                              "fill": "#05966914",
+                              "cornerRadius": 6,
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "SAMjO",
+                                  "name": "Policy coverage Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "verified_user",
+                                  "library": "Material Symbols Outlined",
+                                  "fill": "#059669"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "ARwtZ",
+                          "name": "Policy coverage Value",
+                          "fill": "$text-primary",
+                          "content": "94.2%",
+                          "fontFamily": "Geist Mono",
+                          "fontSize": 28,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "i0eUsP",
+                          "name": "Policy coverage Delta",
+                          "fill": "$text-muted",
+                          "content": "12 apps not enforced",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "X8z0p",
+                  "x": 0,
+                  "y": 152,
+                  "name": "Agent Call Trend Panel",
+                  "width": 656,
+                  "height": 292,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 8,
+                  "stroke": "$border",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Du6Wx",
+                      "name": "Trend Header",
+                      "width": "fill_container",
+                      "height": 44,
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "uTxLe",
+                          "name": "Trend Title Group",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "n08cEG",
+                              "name": "Trend Title",
+                              "fill": "$text-primary",
+                              "content": "Agent call trend",
+                              "fontFamily": "Inter",
+                              "fontSize": 16,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "GTXtZ",
+                              "name": "Trend Subtitle",
+                              "fill": "$text-secondary",
+                              "content": "Allowed, reviewed and blocked requests over the last 24 hours",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "UfdRu",
+                          "name": "Trend Legend",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "YW2Fb",
+                              "name": "Allowed Legend",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "ellipse",
+                                  "id": "g9wDcj",
+                                  "name": "Allowed Dot",
+                                  "fill": "#2563EB",
+                                  "width": 7,
+                                  "height": 7
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "By3Ax",
+                                  "name": "Allowed Label",
+                                  "fill": "$text-secondary",
+                                  "content": "Allowed",
+                                  "fontFamily": "Geist",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "JIQKW",
+                              "name": "Reviewed Legend",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "ellipse",
+                                  "id": "vjRH3",
+                                  "name": "Reviewed Dot",
+                                  "fill": "#635BFF",
+                                  "width": 7,
+                                  "height": 7
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "wze40",
+                                  "name": "Reviewed Label",
+                                  "fill": "$text-secondary",
+                                  "content": "Reviewed",
+                                  "fontFamily": "Geist",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "G0oTM",
+                              "name": "Blocked Legend",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "ellipse",
+                                  "id": "Q3AUZ",
+                                  "name": "Blocked Dot",
+                                  "fill": "#DC2626",
+                                  "width": 7,
+                                  "height": 7
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "nD1LK",
+                                  "name": "Blocked Label",
+                                  "fill": "$text-secondary",
+                                  "content": "Blocked",
+                                  "fontFamily": "Geist",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "XY17j",
+                      "name": "Trend Chart",
+                      "width": "fill_container",
+                      "height": 198,
+                      "fill": "#FBFCFF",
+                      "cornerRadius": 6,
+                      "stroke": "#EEF2F7",
+                      "strokeWidth": 1,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "id": "p5sC2",
+                          "x": 16,
+                          "y": 42,
+                          "name": "Chart Gridline",
+                          "fill": "#E8EEF7",
+                          "width": 584,
+                          "height": 1
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "mPFP5",
+                          "x": 16,
+                          "y": 82,
+                          "name": "Chart Gridline",
+                          "fill": "#E8EEF7",
+                          "width": 584,
+                          "height": 1
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "TWwr7",
+                          "x": 16,
+                          "y": 122,
+                          "name": "Chart Gridline",
+                          "fill": "#E8EEF7",
+                          "width": 584,
+                          "height": 1
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "IPw3r",
+                          "x": 16,
+                          "y": 162,
+                          "name": "Chart Gridline",
+                          "fill": "#E8EEF7",
+                          "width": 584,
+                          "height": 1
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "jr6VX",
+                          "x": 36,
+                          "y": 90,
+                          "name": "Allowed Bar 1",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 92
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "j0WoAS",
+                          "x": 81,
+                          "y": 56,
+                          "name": "Allowed Bar 2",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 126
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "Wpxa4",
+                          "x": 126,
+                          "y": 74,
+                          "name": "Allowed Bar 3",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 108
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "Yf4u5",
+                          "x": 171,
+                          "y": 38,
+                          "name": "Allowed Bar 4",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 144
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "S62AG",
+                          "x": 216,
+                          "y": 64,
+                          "name": "Allowed Bar 5",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 118
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "pWcay",
+                          "x": 261,
+                          "y": 26,
+                          "name": "Allowed Bar 6",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 156
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "rvPlJ",
+                          "x": 306,
+                          "y": 50,
+                          "name": "Allowed Bar 7",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 132
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "b25rS",
+                          "x": 351,
+                          "y": 11,
+                          "name": "Allowed Bar 8",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 171
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "M8YcjC",
+                          "x": 396,
+                          "y": 34,
+                          "name": "Allowed Bar 9",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 148
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "Nlvsc",
+                          "x": 441,
+                          "y": 16,
+                          "name": "Allowed Bar 10",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 166
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "dMbxR",
+                          "x": 486,
+                          "y": 43,
+                          "name": "Allowed Bar 11",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 139
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "DMMbn",
+                          "x": 531,
+                          "y": 0,
+                          "name": "Allowed Bar 12",
+                          "fill": "#2563EB22",
+                          "width": 20,
+                          "height": 182
+                        },
+                        {
+                          "type": "path",
+                          "id": "XoJoq",
+                          "x": 30,
+                          "y": 34,
+                          "name": "Reviewed Trend Line",
+                          "geometry": "M0 92c48-18 76-4 118-32 36-25 72 4 118-16 48-24 82-4 124-16 60-16 110 8 180-18",
+                          "viewBox": [
+                            0,
+                            0,
+                            540,
+                            116
+                          ],
+                          "fill": "#00000000",
+                          "width": 540,
+                          "height": 116,
+                          "stroke": "#635BFF",
+                          "strokeWidth": 3,
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "ijqkT",
+                          "x": 30,
+                          "y": 118,
+                          "name": "Blocked Trend Line",
+                          "geometry": "M0 34c60-16 90 8 130-6 50-18 90 14 140-4 70-16 130 14 270-4",
+                          "viewBox": [
+                            0,
+                            0,
+                            540,
+                            52
+                          ],
+                          "fill": "#00000000",
+                          "width": 540,
+                          "height": 52,
+                          "stroke": "#DC2626",
+                          "strokeWidth": 2,
+                          "strokeLinecap": "round"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Zb3T5",
+                  "x": 680,
+                  "y": 152,
+                  "name": "Live Enforcement Posture",
+                  "width": 408,
+                  "height": 160,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 8,
+                  "stroke": "$border",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 18,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "KBSGs",
+                      "name": "Posture Header",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "KFiEg",
+                          "name": "Posture Title Group",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "GgxTn",
+                              "name": "Posture Title",
+                              "fill": "$text-primary",
+                              "content": "Live enforcement posture",
+                              "fontFamily": "Inter",
+                              "fontSize": 16,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "xULHv",
+                              "name": "Posture Subtitle",
+                              "fill": "$text-secondary",
+                              "content": "Current gateway decisions across production traffic",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "H1xJLh",
+                          "name": "Enforcing Badge",
+                          "height": 28,
+                          "fill": "#ECFDF5",
+                          "cornerRadius": 6,
+                          "gap": 6,
+                          "padding": [
+                            0,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "gcyZb",
+                              "name": "Enforcing Dot",
+                              "fill": "#10B981",
+                              "width": 7,
+                              "height": 7
+                            },
+                            {
+                              "type": "text",
+                              "id": "lW9b7",
+                              "name": "Enforcing Label",
+                              "fill": "#047857",
+                              "content": "Enforcing",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "N4DFe",
+                      "name": "Posture Metrics",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "jBJQR",
+                          "name": "Posture Allowed",
+                          "width": "fill_container",
+                          "fill": "#F8FAFC",
+                          "cornerRadius": 6,
+                          "stroke": "#E7ECF5",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "gap": 6,
+                          "padding": [
+                            12,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Sda9C",
+                              "name": "Allowed Value",
+                              "fill": "#2563EB",
+                              "content": "98.7%",
+                              "fontFamily": "Geist Mono",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "ZrPrC",
+                              "name": "Allowed Label",
+                              "fill": "$text-secondary",
+                              "content": "Allowed",
+                              "fontFamily": "Geist",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "cKS9P",
+                          "name": "Posture Needs review",
+                          "width": "fill_container",
+                          "fill": "#F8FAFC",
+                          "cornerRadius": 6,
+                          "stroke": "#E7ECF5",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "gap": 6,
+                          "padding": [
+                            12,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "GnaeU",
+                              "name": "Needs review Value",
+                              "fill": "#D97706",
+                              "content": "214",
+                              "fontFamily": "Geist Mono",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "LLjRL",
+                              "name": "Needs review Label",
+                              "fill": "$text-secondary",
+                              "content": "Needs review",
+                              "fontFamily": "Geist",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "zKyqX",
+                          "name": "Posture Blocked",
+                          "width": "fill_container",
+                          "fill": "#F8FAFC",
+                          "cornerRadius": 6,
+                          "stroke": "#E7ECF5",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "gap": 6,
+                          "padding": [
+                            12,
+                            10
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "l9BIl",
+                              "name": "Blocked Value",
+                              "fill": "#DC2626",
+                              "content": "73",
+                              "fontFamily": "Geist Mono",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "D4A45V",
+                              "name": "Blocked Label",
+                              "fill": "$text-secondary",
+                              "content": "Blocked",
+                              "fontFamily": "Geist",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Z6nokV",
+                  "x": 0,
+                  "y": 472,
+                  "name": "Risk Events Table",
+                  "clip": true,
+                  "width": 656,
+                  "height": 350,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 8,
+                  "stroke": "$border",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "bxqyu",
+                      "name": "Risk Events Header",
+                      "width": "fill_container",
+                      "height": 66,
+                      "stroke": "$border",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "DD1PM",
+                          "name": "Risk Events Title Group",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "d63ZQ",
+                              "name": "Risk Events Title",
+                              "fill": "$text-primary",
+                              "content": "Recent risk events",
+                              "fontFamily": "Inter",
+                              "fontSize": 16,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "H24nE",
+                              "name": "Risk Events Subtitle",
+                              "fill": "$text-secondary",
+                              "content": "Prioritized agent calls requiring investigation",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "it9sq",
+                          "name": "Risk Filter",
+                          "height": 32,
+                          "fill": "#F8FAFC",
+                          "cornerRadius": 6,
+                          "stroke": "$border",
+                          "strokeWidth": 1,
+                          "gap": 8,
+                          "padding": [
+                            0,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "XJPD0",
+                              "name": "Filter Icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "filter_list",
+                              "library": "Material Symbols Outlined",
+                              "fill": "$text-secondary"
+                            },
+                            {
+                              "type": "text",
+                              "id": "dNrCe",
+                              "name": "Filter Label",
+                              "fill": "$text-primary",
+                              "content": "High severity",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "tdbcl",
+                      "name": "Risk Table Column Header",
+                      "width": "fill_container",
+                      "height": 38,
+                      "fill": "#FBFCFF",
+                      "stroke": "$border",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "gap": 12,
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "CQ61L",
+                          "name": "Column EVENT",
+                          "width": 190,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "q9nw52",
+                              "name": "EVENT Header",
+                              "fill": "$text-muted",
+                              "content": "EVENT",
+                              "fontFamily": "Geist",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "oK9F0",
+                          "name": "Column AGENT",
+                          "width": 130,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "kbbmX",
+                              "name": "AGENT Header",
+                              "fill": "$text-muted",
+                              "content": "AGENT",
+                              "fontFamily": "Geist",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "iiZhw",
+                          "name": "Column RISK",
+                          "width": 86,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "dYh0f",
+                              "name": "RISK Header",
+                              "fill": "$text-muted",
+                              "content": "RISK",
+                              "fontFamily": "Geist",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "iaXaE",
+                          "name": "Column ACTION",
+                          "width": 120,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "qWOui",
+                              "name": "ACTION Header",
+                              "fill": "$text-muted",
+                              "content": "ACTION",
+                              "fontFamily": "Geist",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "v20ybe",
+                      "name": "Risk Event Row 1",
+                      "width": "fill_container",
+                      "height": 48,
+                      "stroke": "#EEF2F7",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "gap": 12,
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "HPBVC",
+                          "name": "Risk Event Cell 1",
+                          "width": 190,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "RGejI",
+                              "name": "Risk Event Name 1",
+                              "fill": "$text-primary",
+                              "content": "Prompt injection attempt",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "s7LrRw",
+                              "name": "Risk Event Time 1",
+                              "fill": "$text-muted",
+                              "content": "2m ago · prod",
+                              "fontFamily": "Geist",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "YQVYV",
+                          "name": "Risk Agent Cell 1",
+                          "width": 130,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ZIK01",
+                              "name": "Risk Agent Name 1",
+                              "fill": "$text-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "sales-copilot-prd",
+                              "fontFamily": "Geist",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ETbke",
+                          "name": "Risk Severity Cell 1",
+                          "width": 86,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "qkpRU",
+                              "name": "Severity Critical",
+                              "height": 24,
+                              "fill": "#FEF2F2",
+                              "cornerRadius": 4,
+                              "layout": "vertical",
+                              "padding": [
+                                0,
+                                8
+                              ],
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "EeWrR",
+                                  "name": "Severity Label 1",
+                                  "fill": "#DC2626",
+                                  "content": "Critical",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "M4Yuc",
+                          "name": "Risk Action Cell 1",
+                          "width": 120,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "pWDcd",
+                              "name": "Risk Action 1",
+                              "fill": "#DC2626",
+                              "content": "Blocked",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "FqX0E",
+                      "name": "Risk Event Row 2",
+                      "width": "fill_container",
+                      "height": 48,
+                      "stroke": "#EEF2F7",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "gap": 12,
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "XRpph",
+                          "name": "Risk Event Cell 2",
+                          "width": 190,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "zG7yq",
+                              "name": "Risk Event Name 2",
+                              "fill": "$text-primary",
+                              "content": "Unauthorized tool call",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "I743W",
+                              "name": "Risk Event Time 2",
+                              "fill": "$text-muted",
+                              "content": "2m ago · prod",
+                              "fontFamily": "Geist",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "idWKz",
+                          "name": "Risk Agent Cell 2",
+                          "width": 130,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "l57UIa",
+                              "name": "Risk Agent Name 2",
+                              "fill": "$text-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "deploy-agent-eu",
+                              "fontFamily": "Geist",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "CtEVm",
+                          "name": "Risk Severity Cell 2",
+                          "width": 86,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "llGI6",
+                              "name": "Severity High",
+                              "height": 24,
+                              "fill": "#FFF7ED",
+                              "cornerRadius": 4,
+                              "layout": "vertical",
+                              "padding": [
+                                0,
+                                8
+                              ],
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "a1ih4E",
+                                  "name": "Severity Label 2",
+                                  "fill": "#EA580C",
+                                  "content": "High",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "q7Ctka",
+                          "name": "Risk Action Cell 2",
+                          "width": 120,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "fq9ee",
+                              "name": "Risk Action 2",
+                              "fill": "$accent",
+                              "content": "Quarantined",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "rf09F",
+                      "name": "Risk Event Row 3",
+                      "width": "fill_container",
+                      "height": 48,
+                      "stroke": "#EEF2F7",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "gap": 12,
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "QYjXC",
+                          "name": "Risk Event Cell 3",
+                          "width": 190,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "y8bwjx",
+                              "name": "Risk Event Name 3",
+                              "fill": "$text-primary",
+                              "content": "PII egress anomaly",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "WRAcF",
+                              "name": "Risk Event Time 3",
+                              "fill": "$text-muted",
+                              "content": "18m ago · prod",
+                              "fontFamily": "Geist",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "axpkx",
+                          "name": "Risk Agent Cell 3",
+                          "width": 130,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "toLCC",
+                              "name": "Risk Agent Name 3",
+                              "fill": "$text-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "support-triage",
+                              "fontFamily": "Geist",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "WJUv7",
+                          "name": "Risk Severity Cell 3",
+                          "width": 86,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "bGdiI",
+                              "name": "Severity High",
+                              "height": 24,
+                              "fill": "#FFF7ED",
+                              "cornerRadius": 4,
+                              "layout": "vertical",
+                              "padding": [
+                                0,
+                                8
+                              ],
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "GWFJ6",
+                                  "name": "Severity Label 3",
+                                  "fill": "#EA580C",
+                                  "content": "High",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Szxi6",
+                          "name": "Risk Action Cell 3",
+                          "width": 120,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "nYxjS",
+                              "name": "Risk Action 3",
+                              "fill": "$accent",
+                              "content": "Redacted",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ntlad",
+                      "name": "Risk Event Row 4",
+                      "width": "fill_container",
+                      "height": 48,
+                      "stroke": "#EEF2F7",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "gap": 12,
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "s4BGK",
+                          "name": "Risk Event Cell 4",
+                          "width": 190,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "vMGfu",
+                              "name": "Risk Event Name 4",
+                              "fill": "$text-primary",
+                              "content": "Permission drift detected",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "g3xF3",
+                              "name": "Risk Event Time 4",
+                              "fill": "$text-muted",
+                              "content": "18m ago · prod",
+                              "fontFamily": "Geist",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "u2Y8R",
+                          "name": "Risk Agent Cell 4",
+                          "width": 130,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "l3HW57",
+                              "name": "Risk Agent Name 4",
+                              "fill": "$text-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "finance-recon",
+                              "fontFamily": "Geist",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Q22bc",
+                          "name": "Risk Severity Cell 4",
+                          "width": 86,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "h1lUYl",
+                              "name": "Severity Medium",
+                              "height": 24,
+                              "fill": "#FFFBEB",
+                              "cornerRadius": 4,
+                              "layout": "vertical",
+                              "padding": [
+                                0,
+                                8
+                              ],
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "QZO1I",
+                                  "name": "Severity Label 4",
+                                  "fill": "#B45309",
+                                  "content": "Medium",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ikbU2",
+                          "name": "Risk Action Cell 4",
+                          "width": 120,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Y6X0u",
+                              "name": "Risk Action 4",
+                              "fill": "$accent",
+                              "content": "Review",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Zea51",
+                      "name": "Risk Event Row 5",
+                      "width": "fill_container",
+                      "height": 48,
+                      "stroke": "#EEF2F7",
+                      "gap": 12,
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "WSiqv",
+                          "name": "Risk Event Cell 5",
+                          "width": 190,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "H3ul0",
+                              "name": "Risk Event Name 5",
+                              "fill": "$text-primary",
+                              "content": "Shadow agent token",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "gmRTI",
+                              "name": "Risk Event Time 5",
+                              "fill": "$text-muted",
+                              "content": "18m ago · prod",
+                              "fontFamily": "Geist",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "s8Nwlt",
+                          "name": "Risk Agent Cell 5",
+                          "width": 130,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "PxaPY",
+                              "name": "Risk Agent Name 5",
+                              "fill": "$text-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "ci-release-bot",
+                              "fontFamily": "Geist",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "JuS9i",
+                          "name": "Risk Severity Cell 5",
+                          "width": 86,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "syF2q",
+                              "name": "Severity Medium",
+                              "height": 24,
+                              "fill": "#FFFBEB",
+                              "cornerRadius": 4,
+                              "layout": "vertical",
+                              "padding": [
+                                0,
+                                8
+                              ],
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "JftAD",
+                                  "name": "Severity Label 5",
+                                  "fill": "#B45309",
+                                  "content": "Medium",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "F9sja",
+                          "name": "Risk Action Cell 5",
+                          "width": 120,
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "rC1pM",
+                              "name": "Risk Action 5",
+                              "fill": "$accent",
+                              "content": "Revoked",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "accent": {
+      "type": "color",
+      "value": "#635BFF"
+    },
+    "accent-blue": {
+      "type": "color",
+      "value": "#2563EB"
+    },
+    "border": {
+      "type": "color",
+      "value": "#DCE3EE"
+    },
+    "nav-dark": {
+      "type": "color",
+      "value": "#101828"
+    },
+    "risk-high": {
+      "type": "color",
+      "value": "#DC2626"
+    },
+    "risk-low": {
+      "type": "color",
+      "value": "#059669"
+    },
+    "risk-medium": {
+      "type": "color",
+      "value": "#D97706"
+    },
+    "surface": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "surface-muted": {
+      "type": "color",
+      "value": "#F7F9FC"
+    },
+    "surface-panel": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "text-muted": {
+      "type": "color",
+      "value": "#8A94A6"
+    },
+    "text-primary": {
+      "type": "color",
+      "value": "#111827"
+    },
+    "text-secondary": {
+      "type": "color",
+      "value": "#5B6472"
+    }
+  }
+}

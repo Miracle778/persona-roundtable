@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
 import uvicorn
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from my_agent.web.db import get_session
@@ -128,6 +129,19 @@ def register_api_routes(app: FastAPI, service: WebAppService) -> None:
             raise HTTPException(status_code=404, detail="session not found")
         return session
 
+    @app.post("/api/sessions/{session_id}/personas")
+    async def add_session_personas(
+        session_id: str,
+        payload: dict[str, Any] = Body(default_factory=dict),
+    ):
+        try:
+            return service.add_session_personas(
+                session_id=session_id,
+                persona_ids=[str(item) for item in payload.get("persona_ids") or []],
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
     @app.post("/api/sessions/{session_id}/messages", status_code=201)
     async def continue_session(
         session_id: str,
@@ -141,6 +155,25 @@ def register_api_routes(app: FastAPI, service: WebAppService) -> None:
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    @app.post("/api/sessions/{session_id}/stream")
+    async def stream_session(
+        session_id: str,
+        payload: dict[str, Any] = Body(default_factory=dict),
+    ):
+        with service.connection() as conn:
+            if not get_session(conn, session_id):
+                raise HTTPException(status_code=404, detail="session not found")
+        return StreamingResponse(
+            (
+                encode_sse_event(event)
+                for event in service.continue_session_events(
+                    session_id=session_id,
+                    user_message=str(payload.get("content") or ""),
+                )
+            ),
+            media_type="text/event-stream",
+        )
+
 
 def as_string_list(value: Any) -> list[str]:
     if value is None:
@@ -148,6 +181,12 @@ def as_string_list(value: Any) -> list[str]:
     if isinstance(value, list):
         return [str(item) for item in value if str(item).strip()]
     return [str(value)]
+
+
+def encode_sse_event(event: dict[str, Any]) -> str:
+    event_type = str(event.get("type") or "message")
+    data = json.dumps(event, ensure_ascii=False)
+    return f"event: {event_type}\ndata: {data}\n\n"
 
 
 def run_server(

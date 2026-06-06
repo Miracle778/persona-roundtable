@@ -121,6 +121,18 @@ categories:
                 expected_status=201,
             )
             self.assertEqual(session["messages"][0]["role"], "user")
+            self.assertEqual(len(session["personas"]), 1)
+
+            expanded_session = await post_json(
+                client,
+                f"/api/sessions/{session['id']}/personas",
+                {"persona_ids": [clone["id"]]},
+            )
+            self.assertEqual(len(expanded_session["personas"]), 2)
+            self.assertIn(
+                "商业化测试角色",
+                [item["display_name_snapshot"] for item in expanded_session["personas"]],
+            )
 
             updated = await post_json(
                 client,
@@ -129,6 +141,21 @@ categories:
                 expected_status=201,
             )
             self.assertGreaterEqual(len(updated["messages"]), 3)
+
+            stream_text = await stream_text_response(
+                client,
+                f"/api/sessions/{session['id']}/stream",
+                {"content": "再补充一轮流式观点"},
+            )
+            self.assertIn("event: message", stream_text)
+            self.assertIn("event: done", stream_text)
+            self.assertIn("再补充一轮流式观点", stream_text)
+
+            streamed_session = await get_json(client, f"/api/sessions/{session['id']}")
+            streamed_persona_messages = [
+                item for item in streamed_session["messages"] if item["role"] == "persona"
+            ]
+            self.assertGreaterEqual(len(streamed_persona_messages), 2)
 
             deleted = await request_json(client, "DELETE", f"/api/personas/{clone['id']}")
             self.assertTrue(deleted["archived"])
@@ -162,6 +189,24 @@ async def request_json(
             f"{method} {path} returned {response.status_code}: {response.text}"
         )
     return response.json()
+
+
+async def stream_text_response(
+    client: httpx.AsyncClient,
+    path: str,
+    payload: dict,
+    expected_status: int = 200,
+) -> str:
+    async with client.stream("POST", path, json=payload) as response:
+        if response.status_code != expected_status:
+            text = await response.aread()
+            raise AssertionError(
+                f"POST {path} returned {response.status_code}: {text.decode()}"
+            )
+        content_type = response.headers.get("content-type", "")
+        if "text/event-stream" not in content_type:
+            raise AssertionError(f"expected SSE content-type, got {content_type}")
+        return (await response.aread()).decode()
 
 
 if __name__ == "__main__":

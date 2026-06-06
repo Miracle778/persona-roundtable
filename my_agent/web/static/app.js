@@ -5,9 +5,33 @@ const state = {
   currentSession: null,
   currentPersonaId: null,
   topic: null,
+  mode: "idle",
+  topicCardExpanded: false,
+  sending: false,
+  sessionPersonaPickerOpen: false,
+  pendingSessionPersonaIds: new Set(),
+  selectedPersonaIds: new Set(),
 };
 
 const $ = (id) => document.getElementById(id);
+
+const sourceLabels = {
+  llm: "LLM 精炼",
+  local: "本地草稿",
+  fallback: "降级草稿",
+};
+
+const roleColors = ["blue", "green", "purple", "orange", "pink", "amber"];
+
+const roleColorMap = {
+  "孙笑川": "pink",
+  "马斯克": "green",
+  "罗翔": "blue",
+  "张维为": "purple",
+  "峰哥": "orange",
+  "敖厂长": "amber",
+  "default": "blue",
+};
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -31,10 +55,12 @@ async function loadAll() {
   state.config = config;
   state.personas = personas;
   state.sessions = sessions;
+  ensurePersonaSelection();
   renderConfig();
   renderModelPicker();
   renderPersonas();
   renderSessions();
+  renderWorkSurface();
 }
 
 function renderConfig() {
@@ -68,26 +94,138 @@ function renderModels() {
 }
 
 function renderPersonas() {
-  const container = $("personaList");
-  container.innerHTML = "";
+  ensurePersonaSelection();
+  const statusContainer = $("personaList");
+  const manageContainer = $("personaManageList");
+  statusContainer.innerHTML = "";
+  manageContainer.innerHTML = "";
+  const displayPersonas = currentDisplayPersonas();
+  $("personaCount").textContent = `${displayPersonas.length} 位`;
+  if (!displayPersonas.length) {
+    const empty = document.createElement("div");
+    empty.className = "persona-empty";
+    empty.textContent = "还没有选择本场嘉宾";
+    statusContainer.appendChild(empty);
+  }
+  for (const persona of displayPersonas) {
+    statusContainer.appendChild(createPersonaStatusRow(persona));
+  }
   for (const persona of state.personas) {
-    const row = document.createElement("div");
-    row.className = "persona-item";
-    if (persona.id === state.currentPersonaId) row.classList.add("active");
-    row.innerHTML = `
-      <input type="checkbox" value="${escapeHtml(persona.id)}" checked>
-      <button type="button" class="persona-edit">
-        <strong>${escapeHtml(persona.display_name)}</strong>
-        <span class="meta">${escapeHtml((persona.categories || []).join(" / ") || "未分类")} · ${escapeHtml(persona.model || "默认模型")}</span>
-      </button>
-    `;
-    row.querySelector(".persona-edit").onclick = () => selectPersona(persona.id);
-    container.appendChild(row);
+    manageContainer.appendChild(createPersonaManageRow(persona));
   }
   if (!state.currentPersonaId && state.personas.length) {
     state.currentPersonaId = state.personas[0].id;
   }
+  renderDiscussionPersonaList();
+  renderSessionPersonaList();
   renderPersonaEditor();
+}
+
+function ensurePersonaSelection() {
+  const activeIds = new Set(state.personas.map((persona) => persona.id));
+  state.selectedPersonaIds = new Set(
+    Array.from(state.selectedPersonaIds).filter((id) => activeIds.has(id)),
+  );
+  if (state.selectedPersonaIds.size || !state.personas.length) return;
+  state.selectedPersonaIds = new Set(state.personas.map((persona) => persona.id));
+}
+
+function createPersonaStatusRow(persona) {
+  const row = document.createElement("div");
+  const name = persona.display_name || persona.display_name_snapshot;
+  const model = persona.model || persona.model_snapshot || "默认模型";
+  const categories = persona.categories || [];
+  const roleColor = getRoleColor(name);
+  row.className = `persona-item role-card persona-status-card tone-${roleColor}`;
+  row.innerHTML = `
+    <span class="persona-dot ${roleColor}" aria-hidden="true"></span>
+    <span class="persona-info">
+      <strong>${escapeHtml(name)}</strong>
+      <span class="meta">${escapeHtml(categories.join(" / ") || "本场角色")} · ${escapeHtml(model)}</span>
+    </span>
+  `;
+  return row;
+}
+
+function currentDisplayPersonas() {
+  if (state.currentSession?.personas?.length) return state.currentSession.personas;
+  return state.personas.filter((persona) => state.selectedPersonaIds.has(persona.id));
+}
+
+function createPersonaManageRow(persona) {
+  const row = document.createElement("div");
+  const roleColor = getRoleColor(persona.display_name);
+  row.className = `persona-item role-card persona-manage-card tone-${roleColor}`;
+  if (persona.id === state.currentPersonaId) row.classList.add("active");
+  row.innerHTML = `
+    <span class="persona-dot ${roleColor}" aria-hidden="true"></span>
+    <button type="button" class="persona-edit persona-info">
+      <strong>${escapeHtml(persona.display_name)}</strong>
+      <span class="meta">${escapeHtml((persona.categories || []).join(" / ") || "未分类")} · ${escapeHtml(persona.model || "默认模型")}</span>
+    </button>
+  `;
+  row.querySelector(".persona-edit").onclick = runAction(() => selectPersona(persona.id));
+  return row;
+}
+
+function createPersonaCheckRow(persona, selectedSet, onChange) {
+  const row = document.createElement("div");
+  const roleColor = getRoleColor(persona.display_name);
+  row.className = `persona-item role-card persona-check-card tone-${roleColor}`;
+  row.innerHTML = `
+    <label class="persona-check" title="参与本场">
+      <input type="checkbox" value="${escapeHtml(persona.id)}" ${selectedSet.has(persona.id) ? "checked" : ""}>
+      <span class="persona-dot ${roleColor}" aria-hidden="true"></span>
+    </label>
+    <span class="persona-info">
+      <strong>${escapeHtml(persona.display_name)}</strong>
+      <span class="meta">${escapeHtml((persona.categories || []).join(" / ") || "未分类")} · ${escapeHtml(persona.model || "默认模型")}</span>
+    </span>
+  `;
+  row.querySelector("input").onchange = (event) => onChange(persona.id, event.target.checked);
+  return row;
+}
+
+function renderDiscussionPersonaList() {
+  const container = $("discussionPersonaList");
+  container.innerHTML = "";
+  $("draftPersonaCount").textContent = `${state.selectedPersonaIds.size} 位`;
+  for (const persona of state.personas) {
+    container.appendChild(createPersonaCheckRow(persona, state.selectedPersonaIds, (id, checked) => {
+      if (checked) {
+        state.selectedPersonaIds.add(id);
+      } else {
+        state.selectedPersonaIds.delete(id);
+      }
+      renderPersonas();
+    }));
+  }
+}
+
+function renderSessionPersonaList() {
+  const container = $("sessionPersonaList");
+  container.innerHTML = "";
+  $("sessionPersonaPicker").classList.toggle("hidden", !state.sessionPersonaPickerOpen);
+  if (!state.currentSession) return;
+  const existing = new Set((state.currentSession.personas || []).map((persona) => persona.persona_id));
+  const candidates = state.personas.filter((persona) => !existing.has(persona.id));
+  if (!candidates.length) {
+    const empty = document.createElement("div");
+    empty.className = "persona-empty";
+    empty.textContent = "所有角色都已在本场讨论中";
+    container.appendChild(empty);
+    return;
+  }
+  for (const persona of candidates) {
+    container.appendChild(createPersonaCheckRow(persona, state.pendingSessionPersonaIds, (id, checked) => {
+      if (checked) {
+        state.pendingSessionPersonaIds.add(id);
+      } else {
+        state.pendingSessionPersonaIds.delete(id);
+      }
+      renderSessionPersonaList();
+    }));
+  }
 }
 
 function currentPersona() {
@@ -119,24 +257,58 @@ function renderSessions() {
     container.appendChild(empty);
     return;
   }
-  for (const session of state.sessions) {
-    const button = document.createElement("button");
-    button.className = "session-item";
-    button.innerHTML = `
-      <strong>${escapeHtml(session.title)}</strong>
-      <span class="meta">${escapeHtml((session.topic_tags || []).join(" / "))} · ${session.message_count || 0} 条</span>
-    `;
-    button.onclick = () => openSession(session.id);
-    container.appendChild(button);
+  const groups = groupSessionsByDate(state.sessions);
+  for (const group of groups) {
+    const section = document.createElement("section");
+    section.className = "session-group";
+    const label = document.createElement("div");
+    label.className = "session-group-label";
+    label.textContent = group.label;
+    section.appendChild(label);
+    for (const session of group.sessions) {
+      const button = document.createElement("button");
+      button.className = "session-item";
+      if (state.currentSession?.id === session.id) button.classList.add("active");
+      button.innerHTML = `
+        <strong>${escapeHtml(session.title)}</strong>
+        <span class="meta">${escapeHtml((session.topic_tags || []).join(" / "))} · ${session.message_count || 0} 条</span>
+      `;
+      button.onclick = runAction(() => openSession(session.id));
+      section.appendChild(button);
+    }
+    container.appendChild(section);
   }
+}
+
+function renderWorkSurface() {
+  const hasSession = Boolean(state.currentSession);
+  const composing = state.mode === "composing";
+  $("conversationEmpty").classList.toggle("hidden", hasSession || composing);
+  $("topicEditor").classList.toggle("hidden", hasSession || !composing);
+  $("sessionTopicSummary").classList.toggle("hidden", !hasSession);
+  $("messageList").classList.toggle("hidden", !hasSession);
+  $("messageForm").classList.toggle("hidden", !hasSession);
+  if (hasSession) renderSessionTopicSummary();
 }
 
 function renderTopicCard(topic) {
   state.topic = topic;
+  const hasQuestions = Boolean((topic.clarification_questions || []).length);
+  if (hasQuestions) state.topicCardExpanded = true;
   $("topicCard").classList.remove("hidden");
+  $("topicCard").classList.toggle("is-compact", !state.topicCardExpanded);
+  $("toggleTopicCard").textContent = state.topicCardExpanded ? "收起" : "编辑";
+  $("topicCompact").innerHTML = `
+    <strong>${escapeHtml(topic.title || "未命名话题")}</strong>
+    <span>${escapeHtml(topic.discussion_task || "确认后即可开始讨论。")}</span>
+  `;
   $("topicTitle").value = topic.title || "";
   $("topicTags").value = (topic.tags || []).join(", ");
   $("topicTask").value = topic.discussion_task || "";
+  const source = topic.refinement_source || "local";
+  $("topicSource").textContent = sourceLabels[source] || sourceLabels.local;
+  $("topicSource").dataset.source = source;
+  renderTopicTags(topic.tags || []);
   renderClarificationQuestions(topic);
 }
 
@@ -152,48 +324,145 @@ function readTopicCard() {
 function renderClarificationQuestions(topic) {
   const questions = topic.clarification_questions || [];
   const list = $("topicQuestions");
+  const answers = $("clarificationAnswers");
   list.innerHTML = "";
+  answers.innerHTML = "";
   if (!questions.length) {
+    list.classList.add("hidden");
     $("clarificationBox").classList.add("hidden");
-    $("clarificationAnswer").value = "";
     return;
   }
+  list.classList.remove("hidden");
   const title = document.createElement("strong");
   title.textContent = `需要澄清（第 ${topic.clarification_round || 0}/${topic.clarification_round_limit || 3} 轮）`;
   list.appendChild(title);
-  const ul = document.createElement("ul");
-  for (const question of questions) {
-    const item = document.createElement("li");
-    item.textContent = question;
-    ul.appendChild(item);
+  for (const [index, question] of questions.entries()) {
+    const row = document.createElement("label");
+    row.className = "clarification-answer-row";
+    const text = document.createElement("span");
+    text.textContent = question;
+    const input = document.createElement("textarea");
+    input.className = "clarification-answer";
+    input.rows = 2;
+    input.placeholder = `回答问题 ${index + 1}`;
+    row.appendChild(text);
+    row.appendChild(input);
+    answers.appendChild(row);
   }
-  list.appendChild(ul);
   $("clarificationBox").classList.remove("hidden");
 }
 
 function selectedPersonaIds() {
-  return Array.from(document.querySelectorAll("#personaList input:checked")).map((item) => item.value);
+  return Array.from(state.selectedPersonaIds);
 }
 
 async function openSession(id) {
   state.currentSession = await api(`/api/sessions/${id}`);
+  state.mode = "session";
+  state.sessionPersonaPickerOpen = false;
+  state.pendingSessionPersonaIds = new Set();
+  renderWorkSurface();
   renderMessages();
+  renderPersonas();
+  renderSessions();
+}
+
+function startDiscussion() {
+  state.mode = "composing";
+  state.currentSession = null;
+  state.topic = null;
+  state.topicCardExpanded = false;
+  state.sessionPersonaPickerOpen = false;
+  state.pendingSessionPersonaIds = new Set();
+  $("rawInput").value = "";
+  $("topicTitle").value = "";
+  $("topicTags").value = "";
+  $("topicTask").value = "";
+  $("topicCard").classList.add("hidden");
+  $("topicQuestions").classList.add("hidden");
+  $("clarificationBox").classList.add("hidden");
+  renderTopicTags([]);
+  renderWorkSurface();
+  renderSessions();
+  $("rawInput").focus();
+}
+
+function toggleTopicCard() {
+  if (!state.topic) return;
+  state.topicCardExpanded = !state.topicCardExpanded;
+  renderTopicCard(readTopicCard());
+}
+
+function renderSessionTopicSummary() {
+  const session = state.currentSession;
+  if (!session) return;
+  const tags = session.topic_tags || [];
+  $("sessionTopicContent").innerHTML = `
+    <div class="session-topic-title">
+      <strong>${escapeHtml(session.title || session.refined_topic || "未命名讨论")}</strong>
+      <span>${escapeHtml(session.discussion_task || "讨论进行中")}</span>
+    </div>
+    <div class="topic-tag-row">
+      ${tags.map((tag) => `<span class="topic-tag">${escapeHtml(tag)}</span>`).join("")}
+    </div>
+  `;
+  renderSessionPersonaList();
+}
+
+function getRoleColor(name) {
+  for (const [key, color] of Object.entries(roleColorMap)) {
+    if (name && name.includes(key)) return color;
+  }
+  const hash = Array.from(String(name || "default")).reduce(
+    (sum, char) => sum + char.charCodeAt(0),
+    0,
+  );
+  return roleColors[hash % roleColors.length];
+}
+
+function getInitial(name) {
+  if (!name) return "?";
+  return name.charAt(0);
 }
 
 function renderMessages() {
   const container = $("messageList");
   container.innerHTML = "";
   const messages = state.currentSession?.messages || [];
-  for (const message of messages) {
-    const row = document.createElement("article");
-    row.className = "message";
-    row.innerHTML = `
-      <div class="speaker">${escapeHtml(message.speaker || message.role)}</div>
-      <div>
-        <div class="message-body">${escapeHtml(message.content)}</div>
-        <div class="meta">${escapeHtml([message.provider_id, message.model].filter(Boolean).join(" / "))}</div>
+  if (!messages.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <strong>还没有讨论消息</strong>
+        <span>主题确认后，角色发言会在这里展开。</span>
       </div>
     `;
+    return;
+  }
+  for (const message of messages) {
+    const row = document.createElement("article");
+    const speakerName = message.speaker || message.role || "系统";
+    const isUser = message.role === "user" || speakerName === "用户";
+    const roleColor = getRoleColor(speakerName);
+    row.className = `message ${isUser ? "user" : "assistant"} tone-${roleColor}`;
+
+    if (isUser) {
+      row.innerHTML = `
+        <div class="avatar user">${escapeHtml(getInitial(speakerName))}</div>
+        <div class="message-bubble">
+          <div class="speaker">${escapeHtml(speakerName)}</div>
+          <div class="message-body">${escapeHtml(message.content)}</div>
+        </div>
+      `;
+    } else {
+      row.innerHTML = `
+        <div class="avatar ${roleColor}">${escapeHtml(getInitial(speakerName))}</div>
+        <div class="message-bubble">
+          <div class="speaker">${escapeHtml(speakerName)}</div>
+          <div class="message-body">${escapeHtml(message.content)}</div>
+          <div class="message-meta">${escapeHtml([message.provider_id, message.model].filter(Boolean).join(" / "))}</div>
+        </div>
+      `;
+    }
     container.appendChild(row);
   }
   container.scrollTop = container.scrollHeight;
@@ -205,42 +474,94 @@ async function refreshSessions() {
   renderSessions();
 }
 
+function groupSessionsByDate(sessions) {
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startOfWeek = new Date(startOfToday);
+  startOfWeek.setDate(startOfToday.getDate() - 6);
+  const buckets = [
+    { label: "📅 今天", sessions: [] },
+    { label: "📅 本周", sessions: [] },
+    { label: "更早", sessions: [] },
+  ];
+  for (const session of sessions) {
+    const updated = new Date(session.updated_at || session.created_at || 0);
+    if (updated >= startOfToday) {
+      buckets[0].sessions.push(session);
+    } else if (updated >= startOfWeek) {
+      buckets[1].sessions.push(session);
+    } else {
+      buckets[2].sessions.push(session);
+    }
+  }
+  return buckets.filter((bucket) => bucket.sessions.length);
+}
+
+function renderTopicTags(tags) {
+  const row = $("topicTagRow");
+  row.innerHTML = "";
+  for (const tag of tags) {
+    const chip = document.createElement("span");
+    chip.className = "topic-tag";
+    chip.textContent = tag;
+    row.appendChild(chip);
+  }
+}
+
 async function refineTopic() {
   const rawInput = $("rawInput").value.trim();
-  if (!rawInput) return;
+  if (!rawInput) {
+    alert("先输入一个讨论话题。");
+    return;
+  }
   const topic = await api("/api/topic/refine", {
     method: "POST",
     body: JSON.stringify({ raw_input: rawInput }),
   });
+  state.topicCardExpanded = Boolean((topic.clarification_questions || []).length);
   renderTopicCard(topic);
 }
 
 async function continueRefinement() {
   const rawInput = $("rawInput").value.trim();
-  const answer = $("clarificationAnswer").value.trim();
-  if (!rawInput || !state.topic || !answer) return;
+  const answers = Array.from(document.querySelectorAll(".clarification-answer"))
+    .map((item) => item.value.trim())
+    .filter(Boolean);
+  if (!rawInput || !state.topic || !answers.length) {
+    alert("先回答澄清问题，再继续精炼。");
+    return;
+  }
   const topic = await api("/api/topic/refine", {
     method: "POST",
     body: JSON.stringify({
       raw_input: rawInput,
       previous_topic: readTopicCard(),
-      clarification_answers: [answer],
+      clarification_answers: answers,
     }),
   });
+  state.topicCardExpanded = Boolean((topic.clarification_questions || []).length);
   renderTopicCard(topic);
 }
 
 function skipClarification() {
   if (!state.topic) return;
+  state.topicCardExpanded = false;
   renderTopicCard({
     ...readTopicCard(),
     clarification_questions: [],
   });
 }
 
+$("topicTags").oninput = () => renderTopicTags(
+  $("topicTags").value.split(",").map((item) => item.trim()).filter(Boolean),
+);
+
 async function createSession() {
   const rawInput = $("rawInput").value.trim();
-  if (!rawInput) return;
+  if (!rawInput) {
+    alert("先输入一个讨论话题。");
+    return;
+  }
   if (!state.topic) {
     await refineTopic();
     return;
@@ -249,48 +570,236 @@ async function createSession() {
     alert("请先回答澄清问题，或点击跳过澄清后再开始讨论。");
     return;
   }
+  const personaIds = selectedPersonaIds();
+  if (!personaIds.length) {
+    alert("至少选择一位参与角色。");
+    openSettings();
+    return;
+  }
   const topic = readTopicCard();
   const session = await api("/api/sessions", {
     method: "POST",
     body: JSON.stringify({
       raw_input: rawInput,
       topic,
-      persona_ids: selectedPersonaIds(),
+      persona_ids: personaIds,
     }),
   });
   state.currentSession = session;
+  state.mode = "session";
+  state.sessionPersonaPickerOpen = false;
+  state.pendingSessionPersonaIds = new Set();
   await refreshSessions();
+  renderWorkSurface();
   renderMessages();
+  renderPersonas();
 }
 
 async function sendMessage(event) {
   event.preventDefault();
-  if (!state.currentSession) return;
+  if (state.sending) return;
+  if (!state.currentSession) {
+    alert("请先开始一个讨论，再发送补充消息。");
+    return;
+  }
   const input = $("messageInput");
   const content = input.value.trim();
   if (!content) return;
   input.value = "";
-  state.currentSession = await api(`/api/sessions/${state.currentSession.id}/messages`, {
+  state.sending = true;
+  setMessageSending(true, "发送中...");
+  try {
+    await streamSessionMessages(state.currentSession.id, content);
+    await refreshSessions();
+    renderMessages();
+  } catch (error) {
+    input.value = content;
+    setMessageSending(false, "发送失败，已恢复输入");
+    throw error;
+  } finally {
+    state.sending = false;
+    if (!$("messageInput").value.trim()) setMessageSending(false, "");
+  }
+}
+
+function setMessageSending(isSending, statusText) {
+  $("sendMessage").disabled = isSending;
+  $("sendMessage").textContent = isSending ? "发送中" : "发送";
+  $("messageInput").disabled = isSending;
+  $("messageStatus").textContent = statusText || "";
+}
+
+async function streamSessionMessages(sessionId, content) {
+  const response = await fetch(`/api/sessions/${sessionId}/stream`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ content }),
   });
-  await refreshSessions();
-  renderMessages();
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || response.statusText);
+  }
+  if (!response.body) {
+    state.currentSession = await api(`/api/sessions/${sessionId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    });
+    return;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    buffer = consumeSseBuffer(buffer);
+  }
+  buffer += decoder.decode();
+  consumeSseBuffer(`${buffer}\n\n`);
+}
+
+function consumeSseBuffer(buffer) {
+  const chunks = buffer.split("\n\n");
+  const remainder = chunks.pop() || "";
+  for (const chunk of chunks) {
+    const event = parseSseEvent(chunk);
+    if (event) applyStreamEvent(event);
+  }
+  return remainder;
+}
+
+function parseSseEvent(chunk) {
+  const dataLines = [];
+  let eventType = "message";
+  for (const line of chunk.split("\n")) {
+    if (line.startsWith("event:")) eventType = line.slice("event:".length).trim();
+    if (line.startsWith("data:")) dataLines.push(line.slice("data:".length).trim());
+  }
+  if (!dataLines.length) return null;
+  const payload = JSON.parse(dataLines.join("\n"));
+  return { type: payload.type || eventType, ...payload };
+}
+
+function applyStreamEvent(event) {
+  if (!state.currentSession) return;
+  if (event.type === "message" && event.message) {
+    state.currentSession.messages = [
+      ...(state.currentSession.messages || []),
+      event.message,
+    ];
+    renderMessages();
+  }
+  if (event.type === "done" && event.session) {
+    state.currentSession = event.session;
+    renderMessages();
+  }
 }
 
 async function assignModel() {
-  const personaIds = selectedPersonaIds();
-  if (!personaIds.length) return;
+  const persona = currentPersona();
+  if (!persona) {
+    alert("先在角色管理里选中一个角色。");
+    return;
+  }
   await api("/api/personas/model", {
     method: "POST",
     body: JSON.stringify({
-      persona_ids: personaIds,
+      persona_ids: [persona.id],
       provider_id: $("providerSelect").value,
       model: $("modelSelect").value,
     }),
   });
   state.personas = await api("/api/personas");
   renderPersonas();
+}
+
+async function addProvider(event) {
+  event.preventDefault();
+  const id = $("providerId").value.trim();
+  const models = $("providerModels").value.split(",").map((item) => item.trim()).filter(Boolean);
+  if (!id || !models.length) {
+    alert("Provider ID 和模型列表不能为空。");
+    return;
+  }
+  const provider = {
+    id,
+    name: $("providerName").value.trim() || id,
+    base_url: $("providerBaseUrl").value.trim(),
+    api_key: $("providerApiKey").value.trim(),
+    available_models: models,
+  };
+  const providers = [...(state.config.providers || [])];
+  const index = providers.findIndex((item) => item.id === id);
+  if (index >= 0) {
+    providers[index] = { ...providers[index], ...provider };
+  } else {
+    providers.push(provider);
+  }
+  const nextConfig = { ...state.config, providers };
+  if (!nextConfig.default_model?.provider_id) {
+    nextConfig.default_model = { provider_id: id, model: models[0] };
+  }
+  state.config = await api("/api/config", {
+    method: "POST",
+    body: JSON.stringify(nextConfig),
+  });
+  $("providerForm").reset();
+  renderConfig();
+  renderModelPicker();
+  renderPersonas();
+}
+
+function openSessionPersonaPicker() {
+  if (!state.currentSession) return;
+  state.sessionPersonaPickerOpen = true;
+  state.pendingSessionPersonaIds = new Set();
+  renderSessionPersonaList();
+}
+
+function closeSessionPersonaPicker() {
+  state.sessionPersonaPickerOpen = false;
+  state.pendingSessionPersonaIds = new Set();
+  renderSessionPersonaList();
+}
+
+async function addSessionPersonas() {
+  if (!state.currentSession) return;
+  const personaIds = Array.from(state.pendingSessionPersonaIds);
+  if (!personaIds.length) {
+    alert("先选择要加入本场讨论的角色。");
+    return;
+  }
+  state.currentSession = await api(`/api/sessions/${state.currentSession.id}/personas`, {
+    method: "POST",
+    body: JSON.stringify({ persona_ids: personaIds }),
+  });
+  state.sessionPersonaPickerOpen = false;
+  state.pendingSessionPersonaIds = new Set();
+  renderWorkSurface();
+  renderMessages();
+  renderPersonas();
+}
+
+function openSettings() {
+  switchSettingsTab("providers");
+  $("settingsOverlay").classList.remove("hidden");
+  $("settingsDrawer").classList.remove("hidden");
+}
+
+function closeSettings() {
+  $("settingsOverlay").classList.add("hidden");
+  $("settingsDrawer").classList.add("hidden");
+}
+
+function switchSettingsTab(tab) {
+  for (const button of document.querySelectorAll("[data-settings-tab]")) {
+    button.classList.toggle("active", button.dataset.settingsTab === tab);
+  }
+  for (const panel of document.querySelectorAll("[data-settings-panel]")) {
+    panel.classList.toggle("hidden", panel.dataset.settingsPanel !== tab);
+  }
 }
 
 async function savePersona(event) {
@@ -355,20 +864,41 @@ function escapeHtml(value) {
   }[char]));
 }
 
-$("refreshSessions").onclick = refreshSessions;
-$("sessionSearch").oninput = () => refreshSessions();
-$("refineTopic").onclick = refineTopic;
-$("continueRefine").onclick = continueRefinement;
-$("skipClarification").onclick = skipClarification;
-$("createSession").onclick = createSession;
-$("messageForm").onsubmit = sendMessage;
-$("assignModel").onclick = assignModel;
-$("personaForm").onsubmit = savePersona;
-$("clonePersona").onclick = clonePersona;
-$("archivePersona").onclick = archivePersona;
-$("saveConfig").onclick = saveConfig;
+function runAction(action) {
+  return (...args) => {
+    Promise.resolve(action(...args)).catch(showError);
+  };
+}
 
-loadAll().catch((error) => {
+function showError(error) {
   console.error(error);
-  alert(error.message);
-});
+  alert(error.message || String(error));
+}
+
+$("refreshSessions").onclick = runAction(refreshSessions);
+$("sessionSearch").oninput = runAction(() => refreshSessions());
+$("newDiscussion").onclick = runAction(startDiscussion);
+$("startDiscussion").onclick = runAction(startDiscussion);
+$("refineTopic").onclick = runAction(refineTopic);
+$("continueRefine").onclick = runAction(continueRefinement);
+$("skipClarification").onclick = runAction(skipClarification);
+$("toggleTopicCard").onclick = runAction(toggleTopicCard);
+$("createSession").onclick = runAction(createSession);
+$("messageForm").onsubmit = runAction(sendMessage);
+$("sessionAddPersona").onclick = runAction(openSessionPersonaPicker);
+$("confirmSessionPersonas").onclick = runAction(addSessionPersonas);
+$("cancelSessionPersonas").onclick = runAction(closeSessionPersonaPicker);
+$("openSettings").onclick = runAction(openSettings);
+$("closeSettings").onclick = runAction(closeSettings);
+$("settingsOverlay").onclick = runAction(closeSettings);
+for (const button of document.querySelectorAll("[data-settings-tab]")) {
+  button.onclick = runAction(() => switchSettingsTab(button.dataset.settingsTab));
+}
+$("assignModel").onclick = runAction(assignModel);
+$("providerForm").onsubmit = runAction(addProvider);
+$("personaForm").onsubmit = runAction(savePersona);
+$("clonePersona").onclick = runAction(clonePersona);
+$("archivePersona").onclick = runAction(archivePersona);
+$("saveConfig").onclick = runAction(saveConfig);
+
+loadAll().catch(showError);
