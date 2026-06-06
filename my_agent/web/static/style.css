@@ -975,6 +975,91 @@ label span {
   gap: 10px;
 }
 
+.provider-list-panel {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.55);
+}
+
+.provider-list-head,
+.provider-row,
+.provider-title {
+  display: flex;
+  align-items: center;
+}
+
+.provider-list-head,
+.provider-row {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.provider-list {
+  display: grid;
+  gap: 8px;
+}
+
+.provider-row {
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.provider-details {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.provider-title {
+  gap: 8px;
+  min-width: 0;
+}
+
+.provider-title code {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.provider-models {
+  color: var(--muted-light);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.provider-key-status,
+.provider-empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.provider-key-status[data-state="ok"] {
+  color: var(--role-green-light);
+}
+
+.provider-test-button {
+  flex: 0 0 auto;
+}
+
+.provider-test-status {
+  align-self: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.provider-test-status[data-state="ok"] {
+  color: var(--role-green-light);
+}
+
+.provider-test-status[data-state="error"] {
+  color: var(--danger);
+}
+
 .settings-section .pane-head,
 .settings-panel .pane-head,
 .config-section .pane-head {

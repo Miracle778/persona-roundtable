@@ -65,10 +65,15 @@ async function loadAll() {
 
 function renderConfig() {
   $("configJson").value = JSON.stringify(state.config, null, 2);
+  renderProviderList();
 }
 
 function renderModelPicker() {
-  const providerSelect = $("providerSelect");
+  renderProviderModelPicker("providerSelect", "modelSelect");
+}
+
+function renderProviderModelPicker(providerSelectId, modelSelectId) {
+  const providerSelect = $(providerSelectId);
   providerSelect.innerHTML = "";
   for (const provider of state.config.providers || []) {
     const option = document.createElement("option");
@@ -76,14 +81,14 @@ function renderModelPicker() {
     option.textContent = provider.name || provider.id;
     providerSelect.appendChild(option);
   }
-  providerSelect.onchange = renderModels;
-  renderModels();
+  providerSelect.onchange = () => renderModels(providerSelectId, modelSelectId);
+  renderModels(providerSelectId, modelSelectId);
 }
 
-function renderModels() {
-  const providerId = $("providerSelect").value;
+function renderModels(providerSelectId = "providerSelect", modelSelectId = "modelSelect") {
+  const providerId = $(providerSelectId).value;
   const provider = (state.config.providers || []).find((item) => item.id === providerId);
-  const modelSelect = $("modelSelect");
+  const modelSelect = $(modelSelectId);
   modelSelect.innerHTML = "";
   for (const model of provider?.available_models || []) {
     const option = document.createElement("option");
@@ -91,6 +96,68 @@ function renderModels() {
     option.textContent = model;
     modelSelect.appendChild(option);
   }
+}
+
+function renderProviderList() {
+  const providers = state.config.providers || [];
+  const list = $("providerList");
+  const summary = $("providerListSummary");
+  list.innerHTML = "";
+  summary.textContent = `${providers.length} 个`;
+  if (!providers.length) {
+    const empty = document.createElement("div");
+    empty.className = "provider-empty";
+    empty.textContent = "还没有 Provider";
+    list.appendChild(empty);
+    return;
+  }
+  for (const provider of providers) {
+    list.appendChild(createProviderRow(provider));
+  }
+}
+
+function createProviderRow(provider) {
+  const row = document.createElement("article");
+  row.className = "provider-row";
+  const details = document.createElement("div");
+  details.className = "provider-details";
+  const title = document.createElement("div");
+  title.className = "provider-title";
+  const name = document.createElement("strong");
+  name.textContent = provider.name || provider.id;
+  const id = document.createElement("code");
+  id.textContent = provider.id;
+  title.append(name, id);
+  const models = document.createElement("div");
+  models.className = "provider-models";
+  models.textContent = providerModelLabel(provider);
+  const keyStatus = document.createElement("span");
+  keyStatus.className = "provider-key-status";
+  keyStatus.dataset.state = provider.has_api_key ? "ok" : "empty";
+  keyStatus.textContent = provider.has_api_key ? "Key 已配置" : "未配置 Key";
+  details.append(title, models, keyStatus);
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "secondary provider-test-button";
+  button.textContent = "测试连接";
+  button.disabled = !defaultProviderModel(provider);
+  button.onclick = runAction(() => testProviderConnection(
+    provider.id,
+    defaultProviderModel(provider),
+    provider.name || provider.id,
+  ));
+  row.append(details, button);
+  return row;
+}
+
+function providerModelLabel(provider) {
+  const models = provider.available_models || [];
+  if (!models.length) return "未配置模型";
+  return models.join(" · ");
+}
+
+function defaultProviderModel(provider) {
+  return provider.default_model || (provider.available_models || [])[0] || "";
 }
 
 function renderPersonas() {
@@ -749,6 +816,29 @@ async function addProvider(event) {
   renderConfig();
   renderModelPicker();
   renderPersonas();
+}
+
+async function testProviderConnection(providerId, model, providerName) {
+  const status = $("providerTestStatus");
+  const label = providerName || providerId;
+  if (!providerId || !model) {
+    status.textContent = "这个 Provider 还没有可测试模型。";
+    status.dataset.state = "error";
+    return;
+  }
+  status.textContent = `${label} 测试中...`;
+  status.dataset.state = "pending";
+  const result = await api("/api/providers/test", {
+    method: "POST",
+    body: JSON.stringify({ provider_id: providerId, model }),
+  });
+  if (result.ok) {
+    status.textContent = `连接成功：${label} / ${result.message || result.model}`;
+    status.dataset.state = "ok";
+  } else {
+    status.textContent = `连接失败：${label} / ${result.error || "未知错误"}`;
+    status.dataset.state = "error";
+  }
 }
 
 function openSessionPersonaPicker() {

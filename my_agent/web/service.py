@@ -12,6 +12,7 @@ from my_agent.web.config import (
     ensure_config,
     default_config_path,
     load_config,
+    mask_secret,
     masked_config,
     save_config,
 )
@@ -47,11 +48,13 @@ class WebAppService:
         config_path: Path | None = None,
         skill_dirs: Iterable[Path] | None = None,
         topic_llm_client: Any | None = None,
+        provider_test_client_factory: Any | None = None,
     ):
         self.db_path = Path(db_path) if db_path is not None else default_db_path()
         self.config_path = config_path or default_config_path()
         self.skill_dirs = list(skill_dirs or DEFAULT_SKILL_DIRS)
         self.topic_llm_client = topic_llm_client
+        self.provider_test_client_factory = provider_test_client_factory
 
     def bootstrap(self) -> None:
         ensure_config(self.config_path)
@@ -73,8 +76,68 @@ class WebAppService:
         return masked_config(config) if masked else config
 
     def update_config(self, config: dict[str, Any]) -> dict[str, Any]:
+        config = merge_masked_provider_api_keys(
+            incoming=config,
+            current=self.get_config(masked=False),
+        )
         save_config(config, self.config_path)
         return self.get_config(masked=True)
+
+    def test_provider_connection(self, provider_id: str, model: str | None = None) -> dict[str, Any]:
+        config = self.get_config(masked=False)
+        provider = provider_by_id(config, provider_id)
+        if not provider:
+            raise ValueError(f"找不到 Provider：{provider_id}")
+        selected_model = (
+            model
+            or provider.get("default_model")
+            or (provider.get("available_models") or [None])[0]
+        )
+        api_key = str(provider.get("api_key") or "")
+        base_url = str(provider.get("base_url") or "")
+        if not base_url:
+            return {
+                "ok": False,
+                "provider_id": provider_id,
+                "model": selected_model,
+                "error": "Provider 缺少 base_url。",
+            }
+        if not api_key:
+            return {
+                "ok": False,
+                "provider_id": provider_id,
+                "model": selected_model,
+                "error": "Provider 缺少 API Key。",
+            }
+        if not selected_model:
+            return {
+                "ok": False,
+                "provider_id": provider_id,
+                "model": selected_model,
+                "error": "Provider 缺少可测试模型。",
+            }
+        factory = self.provider_test_client_factory or OpenAICompatibleClient
+        try:
+            client = factory(
+                model=str(selected_model),
+                base_url=base_url,
+                api_key=api_key,
+                timeout=15,
+            )
+            message = client.complete("请用一句中文回复：连接测试成功。").strip()
+        except Exception as exc:
+            return {
+                "ok": False,
+                "provider_id": provider_id,
+                "model": selected_model,
+                "error": str(exc),
+            }
+        return {
+            "ok": True,
+            "provider_id": provider_id,
+            "model": selected_model,
+            "message": message[:240],
+        }
 
     def list_personas(self) -> list[dict[str, Any]]:
         with self.connection() as conn:
@@ -322,6 +385,32 @@ def topic_from_dict(data: dict[str, Any]) -> TopicCard:
         refinement_source=str(data.get("refinement_source") or "local"),
         fallback_reason=data.get("fallback_reason"),
     )
+
+
+def merge_masked_provider_api_keys(
+    incoming: dict[str, Any],
+    current: dict[str, Any],
+) -> dict[str, Any]:
+    current_providers = {
+        provider.get("id"): provider
+        for provider in current.get("providers") or []
+        if isinstance(provider, dict)
+    }
+    merged = dict(incoming)
+    providers: list[Any] = []
+    for provider in incoming.get("providers") or []:
+        if not isinstance(provider, dict):
+            providers.append(provider)
+            continue
+        next_provider = dict(provider)
+        current_provider = current_providers.get(next_provider.get("id")) or {}
+        current_key = str(current_provider.get("api_key") or "")
+        incoming_key = str(next_provider.get("api_key") or "")
+        if current_key and incoming_key == mask_secret(current_key):
+            next_provider["api_key"] = current_key
+        providers.append(next_provider)
+    merged["providers"] = providers
+    return merged
 
 
 def string_or_none(value: Any) -> str | None:

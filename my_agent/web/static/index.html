@@ -139,6 +139,14 @@
             <header class="pane-head">
               <strong>LLM Provider</strong>
             </header>
+            <section class="provider-list-panel">
+              <div class="provider-list-head">
+                <strong>已有 Provider</strong>
+                <span id="providerListSummary" class="status-chip">0 个</span>
+              </div>
+              <div id="providerList" class="provider-list" aria-label="已有 Provider"></div>
+              <span id="providerTestStatus" class="provider-test-status" aria-live="polite"></span>
+            </section>
             <form id="providerForm" class="provider-form">
               <label>
                 <span>Provider ID</span>

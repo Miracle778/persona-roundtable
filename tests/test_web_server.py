@@ -30,6 +30,11 @@ class FakeTopicLLM:
         )
 
 
+class FakeProviderClient:
+    def complete(self, prompt: str) -> str:
+        return "HTTP provider connection ok"
+
+
 class WebServerTests(unittest.TestCase):
     def test_api_refine_personas_and_sessions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -57,6 +62,7 @@ categories:
                 config_path=root / "config.json",
                 skill_dirs=[root / "skills"],
                 topic_llm_client=FakeTopicLLM(),
+                provider_test_client_factory=lambda **kwargs: FakeProviderClient(),
             )
             service.bootstrap()
             app = create_app(service=service, static_dir=root)
@@ -86,6 +92,21 @@ categories:
             self.assertEqual(clarified["title"], "HTTP 精炼主题")
             self.assertEqual(clarified["clarification_round"], 1)
             self.assertEqual(clarified["refinement_source"], "llm")
+
+            config = await get_json(client, "/api/config")
+            config["providers"][0]["api_key"] = "sk-test"
+            config = await post_json(client, "/api/config", config)
+            provider = config["providers"][0]
+            provider_test = await post_json(
+                client,
+                "/api/providers/test",
+                {
+                    "provider_id": provider["id"],
+                    "model": provider["available_models"][0],
+                },
+            )
+            self.assertTrue(provider_test["ok"])
+            self.assertEqual(provider_test["message"], "HTTP provider connection ok")
 
             personas = await get_json(client, "/api/personas")
             persona_id = personas[0]["id"]

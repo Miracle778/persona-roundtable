@@ -26,6 +26,16 @@ class FakeTopicLLM:
         )
 
 
+class FakeProviderClient:
+    def __init__(self, response: str = "连接测试成功"):
+        self.response = response
+        self.prompts: list[str] = []
+
+    def complete(self, prompt: str) -> str:
+        self.prompts.append(prompt)
+        return self.response
+
+
 class WebAppServiceTests(unittest.TestCase):
     def test_bootstrap_imports_skills_and_creates_discussion_session(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -155,6 +165,84 @@ categories:
             self.assertEqual(card["clarification_round"], 2)
             self.assertEqual(card["refinement_source"], "llm")
             self.assertIn("更关心 B 端付费验证", topic_llm.prompts[0])
+
+    def test_provider_connection_uses_configured_provider_and_model(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fake_client = FakeProviderClient()
+            calls: list[dict[str, str]] = []
+
+            def client_factory(**kwargs):
+                calls.append(kwargs)
+                return fake_client
+
+            service = WebAppService(
+                db_path=root / "web.sqlite",
+                config_path=root / "config.json",
+                skill_dirs=[root / "skills"],
+                provider_test_client_factory=client_factory,
+            )
+            service.bootstrap()
+            config = service.get_config(masked=False)
+            config["providers"][0]["api_key"] = "sk-test"
+            service.update_config(config)
+
+            result = service.test_provider_connection(
+                provider_id=config["providers"][0]["id"],
+                model=config["providers"][0]["available_models"][0],
+            )
+
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["message"], "连接测试成功")
+            self.assertEqual(calls[0]["base_url"], config["providers"][0]["base_url"])
+            self.assertEqual(calls[0]["api_key"], "sk-test")
+
+    def test_update_config_preserves_real_key_when_masked_config_round_trips(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            service = WebAppService(
+                db_path=root / "web.sqlite",
+                config_path=root / "config.json",
+                skill_dirs=[root / "skills"],
+            )
+            service.bootstrap()
+            real_key = "sk-real-secret-key-1234567890"
+            config = service.get_config(masked=False)
+            provider_id = config["providers"][0]["id"]
+            config["providers"][0]["api_key"] = real_key
+            service.update_config(config)
+
+            masked_config = service.get_config(masked=True)
+            self.assertNotEqual(masked_config["providers"][0]["api_key"], real_key)
+            masked_config["providers"][0]["name"] = "Renamed Provider"
+            service.update_config(masked_config)
+
+            raw_config = service.get_config(masked=False)
+            provider = next(item for item in raw_config["providers"] if item["id"] == provider_id)
+            self.assertEqual(provider["api_key"], real_key)
+            self.assertEqual(provider["name"], "Renamed Provider")
+
+    def test_update_config_writes_plain_replacement_key(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            service = WebAppService(
+                db_path=root / "web.sqlite",
+                config_path=root / "config.json",
+                skill_dirs=[root / "skills"],
+            )
+            service.bootstrap()
+            config = service.get_config(masked=False)
+            provider_id = config["providers"][0]["id"]
+            config["providers"][0]["api_key"] = "sk-old-secret-key-1234567890"
+            service.update_config(config)
+
+            masked_config = service.get_config(masked=True)
+            masked_config["providers"][0]["api_key"] = "sk-new-secret-key-0987654321"
+            service.update_config(masked_config)
+
+            raw_config = service.get_config(masked=False)
+            provider = next(item for item in raw_config["providers"] if item["id"] == provider_id)
+            self.assertEqual(provider["api_key"], "sk-new-secret-key-0987654321")
 
 
 if __name__ == "__main__":

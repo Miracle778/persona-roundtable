@@ -56,6 +56,16 @@ def register_api_routes(app: FastAPI, service: WebAppService) -> None:
     async def update_config(payload: dict[str, Any] = Body(default_factory=dict)):
         return service.update_config(payload)
 
+    @app.post("/api/providers/test")
+    async def test_provider(payload: dict[str, Any] = Body(default_factory=dict)):
+        try:
+            return service.test_provider_connection(
+                provider_id=str(payload.get("provider_id") or ""),
+                model=str(payload.get("model")) if payload.get("model") else None,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
     @app.get("/api/personas")
     async def list_personas():
         return service.list_personas()
