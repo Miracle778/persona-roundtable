@@ -59,6 +59,10 @@ def make_handler(service: WebAppService, static_dir: Path | None = None):
                         service.refine_topic(
                             str(payload.get("raw_input") or ""),
                             title=payload.get("title"),
+                            previous_topic=payload.get("previous_topic"),
+                            clarification_answers=as_string_list(
+                                payload.get("clarification_answers")
+                            ),
                         )
                     )
                     return
@@ -174,6 +178,14 @@ def make_handler(service: WebAppService, static_dir: Path | None = None):
             return
 
     return WebHandler
+
+
+def as_string_list(value) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item).strip()]
+    return [str(value)]
 
 
 def run_server(

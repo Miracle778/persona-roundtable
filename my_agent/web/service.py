@@ -44,10 +44,12 @@ class WebAppService:
         db_path: Path | str | None = None,
         config_path: Path | None = None,
         skill_dirs: Iterable[Path] | None = None,
+        topic_llm_client: Any | None = None,
     ):
         self.db_path = Path(db_path) if db_path is not None else default_db_path()
         self.config_path = config_path or default_config_path()
         self.skill_dirs = list(skill_dirs or DEFAULT_SKILL_DIRS)
+        self.topic_llm_client = topic_llm_client
 
     def bootstrap(self) -> None:
         ensure_config(self.config_path)
@@ -141,8 +143,20 @@ class WebAppService:
                 return search_sessions(conn, query)
             return db_list_sessions(conn)
 
-    def refine_topic(self, raw_input: str, title: str | None = None) -> dict[str, Any]:
-        return refine_topic(raw_input, title=title).to_dict()
+    def refine_topic(
+        self,
+        raw_input: str,
+        title: str | None = None,
+        clarification_answers: list[str] | None = None,
+        previous_topic: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return refine_topic(
+            raw_input,
+            title=title,
+            clarification_answers=clarification_answers,
+            previous_topic=previous_topic,
+            llm_client=self.topic_llm_client or self.build_topic_llm_client(),
+        ).to_dict()
 
     def create_session(
         self,
@@ -234,6 +248,16 @@ class WebAppService:
         default = config.get("default_model") or {}
         return default.get("provider_id"), default.get("model")
 
+    def build_topic_llm_client(self) -> OpenAICompatibleClient | None:
+        config = self.get_config(masked=False)
+        provider_id, model = self.default_model()
+        provider = provider_by_id(config, provider_id)
+        api_key = str(provider.get("api_key") or "")
+        base_url = str(provider.get("base_url") or "")
+        if not api_key or not base_url or not model:
+            return None
+        return OpenAICompatibleClient(model=model, base_url=base_url, api_key=api_key)
+
 
 def topic_from_dict(data: dict[str, Any]) -> TopicCard:
     return TopicCard(
@@ -243,6 +267,10 @@ def topic_from_dict(data: dict[str, Any]) -> TopicCard:
         source_summary=str(data.get("source_summary") or ""),
         suggested_agent_ids=[str(item) for item in data.get("suggested_agent_ids") or []],
         clarification_round_limit=int(data.get("clarification_round_limit") or 3),
+        clarification_questions=[str(item) for item in data.get("clarification_questions") or []],
+        clarification_round=int(data.get("clarification_round") or 0),
+        refinement_source=str(data.get("refinement_source") or "local"),
+        fallback_reason=data.get("fallback_reason"),
     )
 
 
