@@ -19,3 +19,12 @@ mediacrawler_issue_assets/
 .mypy_cache/
 .ruff_cache/
 node_modules/
+
+# Cat Cafe runtime state
+.cat-cafe/
+
+# Claude / Codex / Gemini / Kimi workspace config
+.claude/
+.codex/
+.gemini/
+.kimi/
