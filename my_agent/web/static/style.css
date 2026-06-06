@@ -847,9 +847,24 @@ label span {
   background: var(--panel);
 }
 
+.persona-manage-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  min-height: 0;
+}
+
+.persona-manage-layout .persona-editor {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.55);
+}
+
 #personaPrompt {
-  min-height: 140px;
-  max-height: 200px;
+  min-height: 180px;
+  max-height: 360px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   line-height: 1.5;
@@ -869,16 +884,20 @@ label span {
 
 .settings-drawer {
   position: fixed;
-  inset: 0 auto 0 0;
+  top: 32px;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 21;
-  width: min(720px, 100vw);
+  width: min(1120px, calc(100vw - 48px));
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 18px;
   overflow: auto;
   background: var(--panel);
-  border-right: 1px solid var(--line);
+  border: 1px solid var(--line);
+  border-radius: 14px;
   box-shadow: var(--shadow-md);
 }
 
@@ -974,7 +993,7 @@ label span {
 .compact-persona-list,
 .persona-manage-list {
   flex: initial;
-  max-height: 280px;
+  max-height: 520px;
   padding-right: 2px;
 }
 
@@ -1019,5 +1038,18 @@ label span {
   }
   .message {
     max-width: 95%;
+  }
+  .settings-drawer {
+    inset: 0;
+    width: 100vw;
+    border-radius: 0;
+    transform: none;
+    left: 0;
+  }
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+  .persona-manage-layout {
+    grid-template-columns: 1fr;
   }
 }
