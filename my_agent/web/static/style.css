@@ -146,6 +146,25 @@ label span {
   border-top: 1px solid var(--soft);
 }
 
+.clarification-list {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.clarification-list ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.clarification-box {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--soft);
+}
+
 .hidden { display: none !important; }
 
 .message-list {

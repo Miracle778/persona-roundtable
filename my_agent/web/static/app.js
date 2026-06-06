@@ -137,6 +137,7 @@ function renderTopicCard(topic) {
   $("topicTitle").value = topic.title || "";
   $("topicTags").value = (topic.tags || []).join(", ");
   $("topicTask").value = topic.discussion_task || "";
+  renderClarificationQuestions(topic);
 }
 
 function readTopicCard() {
@@ -146,6 +147,28 @@ function readTopicCard() {
     tags: $("topicTags").value.split(",").map((item) => item.trim()).filter(Boolean),
     discussion_task: $("topicTask").value.trim(),
   };
+}
+
+function renderClarificationQuestions(topic) {
+  const questions = topic.clarification_questions || [];
+  const list = $("topicQuestions");
+  list.innerHTML = "";
+  if (!questions.length) {
+    $("clarificationBox").classList.add("hidden");
+    $("clarificationAnswer").value = "";
+    return;
+  }
+  const title = document.createElement("strong");
+  title.textContent = `需要澄清（第 ${topic.clarification_round || 0}/${topic.clarification_round_limit || 3} 轮）`;
+  list.appendChild(title);
+  const ul = document.createElement("ul");
+  for (const question of questions) {
+    const item = document.createElement("li");
+    item.textContent = question;
+    ul.appendChild(item);
+  }
+  list.appendChild(ul);
+  $("clarificationBox").classList.remove("hidden");
 }
 
 function selectedPersonaIds() {
@@ -192,13 +215,41 @@ async function refineTopic() {
   renderTopicCard(topic);
 }
 
+async function continueRefinement() {
+  const rawInput = $("rawInput").value.trim();
+  const answer = $("clarificationAnswer").value.trim();
+  if (!rawInput || !state.topic || !answer) return;
+  const topic = await api("/api/topic/refine", {
+    method: "POST",
+    body: JSON.stringify({
+      raw_input: rawInput,
+      previous_topic: readTopicCard(),
+      clarification_answers: [answer],
+    }),
+  });
+  renderTopicCard(topic);
+}
+
+function skipClarification() {
+  if (!state.topic) return;
+  renderTopicCard({
+    ...readTopicCard(),
+    clarification_questions: [],
+  });
+}
+
 async function createSession() {
   const rawInput = $("rawInput").value.trim();
   if (!rawInput) return;
-  const topic = state.topic ? readTopicCard() : await api("/api/topic/refine", {
-    method: "POST",
-    body: JSON.stringify({ raw_input: rawInput }),
-  });
+  if (!state.topic) {
+    await refineTopic();
+    return;
+  }
+  if ((state.topic.clarification_questions || []).length) {
+    alert("请先回答澄清问题，或点击跳过澄清后再开始讨论。");
+    return;
+  }
+  const topic = readTopicCard();
   const session = await api("/api/sessions", {
     method: "POST",
     body: JSON.stringify({
@@ -307,6 +358,8 @@ function escapeHtml(value) {
 $("refreshSessions").onclick = refreshSessions;
 $("sessionSearch").oninput = () => refreshSessions();
 $("refineTopic").onclick = refineTopic;
+$("continueRefine").onclick = continueRefinement;
+$("skipClarification").onclick = skipClarification;
 $("createSession").onclick = createSession;
 $("messageForm").onsubmit = sendMessage;
 $("assignModel").onclick = assignModel;

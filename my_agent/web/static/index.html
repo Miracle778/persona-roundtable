@@ -43,6 +43,17 @@
             <span>讨论任务</span>
             <textarea id="topicTask" rows="3"></textarea>
           </label>
+          <div id="topicQuestions" class="clarification-list"></div>
+          <div id="clarificationBox" class="clarification-box hidden">
+            <label>
+              <span>澄清回答</span>
+              <textarea id="clarificationAnswer" rows="2" placeholder="回答上面的问题后继续精炼"></textarea>
+            </label>
+            <div class="toolbar">
+              <button id="continueRefine" type="button">继续精炼</button>
+              <button id="skipClarification" type="button">跳过澄清</button>
+            </div>
+          </div>
         </section>
       </header>
 
