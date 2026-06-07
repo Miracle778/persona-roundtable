@@ -12,6 +12,7 @@ const state = {
   pendingSessionPersonaIds: new Set(),
   selectedPersonaIds: new Set(),
   editingProviderId: null,
+  personaModelDirty: false,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -84,8 +85,19 @@ function renderProviderModelPicker(providerSelectId, modelSelectId) {
     option.textContent = provider.name || provider.id;
     providerSelect.appendChild(option);
   }
-  providerSelect.onchange = () => renderModels(providerSelectId, modelSelectId);
+  providerSelect.onchange = () => {
+    renderModels(providerSelectId, modelSelectId);
+    if (providerSelectId === "providerSelect" && modelSelectId === "modelSelect") {
+      state.personaModelDirty = true;
+    }
+  };
   renderModels(providerSelectId, modelSelectId);
+  const modelSelect = $(modelSelectId);
+  modelSelect.onchange = () => {
+    if (providerSelectId === "providerSelect" && modelSelectId === "modelSelect") {
+      state.personaModelDirty = true;
+    }
+  };
 }
 
 function renderModels(providerSelectId = "providerSelect", modelSelectId = "modelSelect") {
@@ -228,6 +240,7 @@ function syncPersonaModelPicker() {
   const desiredModel = persona?.model || defaultProviderModel(provider);
   ensureModelOption(modelSelect, desiredModel);
   modelSelect.value = desiredModel;
+  state.personaModelDirty = false;
 }
 
 function renderProviderFormMode() {
@@ -877,6 +890,7 @@ async function assignModel() {
     }),
   });
   state.personas = await api("/api/personas");
+  state.personaModelDirty = false;
   renderPersonas();
 }
 
@@ -1036,17 +1050,23 @@ async function savePersona(event) {
   event.preventDefault();
   const persona = currentPersona();
   if (!persona) return;
+  const payload = {
+    display_name: $("personaName").value.trim(),
+    description: $("personaDescription").value.trim(),
+    categories: $("personaCategories").value.split(",").map((item) => item.trim()).filter(Boolean),
+    prompt: $("personaPrompt").value,
+  };
+  if (state.personaModelDirty) {
+    payload.provider_id = $("providerSelect").value;
+    payload.model = $("modelSelect").value;
+  }
   const updated = await api(`/api/personas/${persona.id}`, {
     method: "PATCH",
-    body: JSON.stringify({
-      display_name: $("personaName").value.trim(),
-      description: $("personaDescription").value.trim(),
-      categories: $("personaCategories").value.split(",").map((item) => item.trim()).filter(Boolean),
-      prompt: $("personaPrompt").value,
-    }),
+    body: JSON.stringify(payload),
   });
   state.personas = state.personas.map((item) => item.id === updated.id ? updated : item);
   state.currentPersonaId = updated.id;
+  state.personaModelDirty = false;
   renderPersonas();
 }
 

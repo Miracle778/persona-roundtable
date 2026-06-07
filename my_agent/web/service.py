@@ -172,6 +172,9 @@ class WebAppService:
         categories = updates.get("categories")
         if categories is not None:
             categories = [str(item).strip() for item in categories if str(item).strip()]
+        has_model_update = "provider_id" in updates or "model" in updates
+        provider_id = normalize_optional_string(updates.get("provider_id")) if "provider_id" in updates else None
+        model = normalize_optional_string(updates.get("model")) if "model" in updates else None
         with self.connection() as conn:
             changed = db_update_persona(
                 conn,
@@ -181,6 +184,14 @@ class WebAppService:
                 categories=categories,
                 prompt=string_or_none(updates.get("prompt")),
             )
+            if has_model_update:
+                changed += db_assign_persona_model(
+                    conn,
+                    persona_ids=[persona_id],
+                    provider_id=provider_id,
+                    model=model,
+                    model_source="explicit" if provider_id and model else "inherit",
+                )
             if not changed:
                 raise ValueError(f"找不到可编辑的角色：{persona_id}")
             persona = get_persona(conn, persona_id)
@@ -439,6 +450,13 @@ def string_or_none(value: Any) -> str | None:
     if value is None:
         return None
     return str(value)
+
+
+def normalize_optional_string(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def next_round_index(messages: list[dict[str, Any]]) -> int:

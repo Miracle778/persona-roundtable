@@ -168,11 +168,16 @@ categories:
                     "description": "负责商业化验证",
                     "categories": ["创业产品"],
                     "prompt": "先判断用户是否愿意付费。",
+                    "provider_id": "openai",
+                    "model": "gpt-4o",
                 },
             )
             self.assertEqual(updated["display_name"], "增长顾问")
             self.assertEqual(updated["categories"], ["创业产品"])
             self.assertIn("付费", updated["prompt"])
+            self.assertEqual(updated["provider_id"], "openai")
+            self.assertEqual(updated["model"], "gpt-4o")
+            self.assertEqual(updated["model_source"], "explicit")
 
             archived = service.archive_persona(created["id"])
             self.assertEqual(archived["archived"], True)

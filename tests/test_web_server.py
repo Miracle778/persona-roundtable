@@ -126,10 +126,14 @@ categories:
                     "description": "专注商业化验证",
                     "categories": ["创业产品", "投资市场"],
                     "prompt": "只编辑 persona 副本，不修改原始 Skill。",
+                    "provider_id": "openai",
+                    "model": "gpt-4o-mini",
                 },
             )
             self.assertEqual(patched["display_name"], "商业化测试角色")
             self.assertIn("persona 副本", patched["prompt"])
+            self.assertEqual(patched["provider_id"], "openai")
+            self.assertEqual(patched["model"], "gpt-4o-mini")
 
             created_persona = await post_json(
                 client,
