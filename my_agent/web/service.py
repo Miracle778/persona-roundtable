@@ -23,6 +23,7 @@ from my_agent.web.db import (
     clone_persona as db_clone_persona,
     connect,
     default_db_path,
+    create_persona as db_create_persona,
     create_session as db_create_session,
     ensure_schema,
     get_persona,
@@ -157,6 +158,14 @@ class WebAppService:
             persona = get_persona(conn, clone_id)
         if not persona:
             raise RuntimeError(f"读取角色副本失败：{clone_id}")
+        return persona
+
+    def create_persona(self, display_name: str | None = None) -> dict[str, Any]:
+        with self.connection() as conn:
+            persona_id = db_create_persona(conn, display_name=display_name)
+            persona = get_persona(conn, persona_id)
+        if not persona:
+            raise RuntimeError(f"读取新角色失败：{persona_id}")
         return persona
 
     def update_persona(self, persona_id: str, updates: dict[str, Any]) -> dict[str, Any]:
@@ -308,8 +317,21 @@ class WebAppService:
             personas = session.get("personas") or []
             round_index = next_round_index(session.get("messages") or [])
             for persona in personas:
-                actual_provider = persona.get("provider_id_snapshot") or provider_id
-                actual_model = persona.get("model_snapshot") or model
+                live_persona = get_persona(
+                    conn,
+                    persona["persona_id"],
+                    include_archived=True,
+                ) or {}
+                actual_provider = (
+                    live_persona.get("provider_id")
+                    or persona.get("provider_id_snapshot")
+                    or provider_id
+                )
+                actual_model = (
+                    live_persona.get("model")
+                    or persona.get("model_snapshot")
+                    or model
+                )
                 started_at = time.monotonic()
                 reply, error = build_persona_reply(
                     config=config,

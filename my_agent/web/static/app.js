@@ -11,6 +11,7 @@ const state = {
   sessionPersonaPickerOpen: false,
   pendingSessionPersonaIds: new Set(),
   selectedPersonaIds: new Set(),
+  editingProviderId: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -66,10 +67,12 @@ async function loadAll() {
 function renderConfig() {
   $("configJson").value = JSON.stringify(state.config, null, 2);
   renderProviderList();
+  renderProviderFormMode();
 }
 
 function renderModelPicker() {
   renderProviderModelPicker("providerSelect", "modelSelect");
+  syncPersonaModelPicker();
 }
 
 function renderProviderModelPicker(providerSelectId, modelSelectId) {
@@ -98,12 +101,24 @@ function renderModels(providerSelectId = "providerSelect", modelSelectId = "mode
   }
 }
 
+function ensureModelOption(modelSelect, model) {
+  if (!model) return;
+  if (Array.from(modelSelect.options).some((option) => option.value === model)) return;
+  const option = document.createElement("option");
+  option.value = model;
+  option.textContent = `${model} (当前)`;
+  modelSelect.appendChild(option);
+}
+
 function renderProviderList() {
   const providers = state.config.providers || [];
   const list = $("providerList");
   const summary = $("providerListSummary");
   list.innerHTML = "";
   summary.textContent = `${providers.length} 个`;
+  if (state.editingProviderId && !providers.some((provider) => provider.id === state.editingProviderId)) {
+    cancelProviderEdit();
+  }
   if (!providers.length) {
     const empty = document.createElement("div");
     empty.className = "provider-empty";
@@ -136,17 +151,30 @@ function createProviderRow(provider) {
   keyStatus.dataset.state = provider.has_api_key ? "ok" : "empty";
   keyStatus.textContent = provider.has_api_key ? "Key 已配置" : "未配置 Key";
   details.append(title, models, keyStatus);
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "secondary provider-test-button";
-  button.textContent = "测试连接";
-  button.disabled = !defaultProviderModel(provider);
-  button.onclick = runAction(() => testProviderConnection(
+  const actions = document.createElement("div");
+  actions.className = "provider-actions";
+  const editButton = document.createElement("button");
+  editButton.type = "button";
+  editButton.className = "secondary provider-edit-button";
+  editButton.textContent = "编辑";
+  editButton.onclick = runAction(() => editProvider(provider.id));
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "ghost provider-delete-button";
+  deleteButton.textContent = "删除";
+  deleteButton.onclick = runAction(() => deleteProvider(provider.id));
+  const testButton = document.createElement("button");
+  testButton.type = "button";
+  testButton.className = "secondary provider-test-button";
+  testButton.textContent = "测试连接";
+  testButton.disabled = !defaultProviderModel(provider);
+  testButton.onclick = runAction(() => testProviderConnection(
     provider.id,
     defaultProviderModel(provider),
     provider.name || provider.id,
   ));
-  row.append(details, button);
+  actions.append(editButton, deleteButton, testButton);
+  row.append(details, actions);
   return row;
 }
 
@@ -158,6 +186,75 @@ function providerModelLabel(provider) {
 
 function defaultProviderModel(provider) {
   return provider.default_model || (provider.available_models || [])[0] || "";
+}
+
+function providerById(providerId) {
+  return (state.config.providers || []).find((provider) => provider.id === providerId) || null;
+}
+
+function personaRecordId(persona) {
+  return persona?.id || persona?.persona_id || null;
+}
+
+function livePersona(persona) {
+  const id = personaRecordId(persona);
+  if (!id) return null;
+  return state.personas.find((item) => item.id === id) || null;
+}
+
+function displayPersonaModel(persona) {
+  const live = livePersona(persona);
+  return live?.model || persona.model || persona.model_snapshot || "默认模型";
+}
+
+function syncPersonaModelPicker() {
+  const providerSelect = $("providerSelect");
+  const modelSelect = $("modelSelect");
+  if (!providerSelect || !modelSelect) return;
+  const providers = state.config?.providers || [];
+  if (!providers.length) {
+    providerSelect.innerHTML = "";
+    modelSelect.innerHTML = "";
+    return;
+  }
+  const persona = currentPersona();
+  const fallbackProviderId = state.config?.default_model?.provider_id || providers[0].id;
+  const desiredProviderId = persona?.provider_id || fallbackProviderId;
+  providerSelect.value = providers.some((provider) => provider.id === desiredProviderId)
+    ? desiredProviderId
+    : fallbackProviderId;
+  renderModels("providerSelect", "modelSelect");
+  const provider = providerById(providerSelect.value) || providers[0];
+  const desiredModel = persona?.model || defaultProviderModel(provider);
+  ensureModelOption(modelSelect, desiredModel);
+  modelSelect.value = desiredModel;
+}
+
+function renderProviderFormMode() {
+  const editing = Boolean(state.editingProviderId);
+  $("providerId").disabled = editing;
+  $("providerApiKey").placeholder = editing ? "留空保留已有 Key" : "sk-...";
+  $("addProvider").textContent = editing ? "保存 Provider" : "添加 Provider";
+  $("cancelProviderEdit").classList.toggle("hidden", !editing);
+}
+
+function editProvider(providerId) {
+  const provider = providerById(providerId);
+  if (!provider) return;
+  state.editingProviderId = providerId;
+  $("providerId").value = provider.id || "";
+  $("providerName").value = provider.name || provider.id || "";
+  $("providerBaseUrl").value = provider.base_url || "";
+  $("providerApiKey").value = "";
+  $("providerModels").value = (provider.available_models || []).join(", ");
+  renderProviderFormMode();
+  $("providerName").focus();
+}
+
+function cancelProviderEdit() {
+  state.editingProviderId = null;
+  $("providerForm").reset();
+  renderProviderFormMode();
 }
 
 function renderPersonas() {
@@ -200,7 +297,7 @@ function ensurePersonaSelection() {
 function createPersonaStatusRow(persona) {
   const row = document.createElement("div");
   const name = persona.display_name || persona.display_name_snapshot;
-  const model = persona.model || persona.model_snapshot || "默认模型";
+  const model = displayPersonaModel(persona);
   const categories = persona.categories || [];
   const roleColor = getRoleColor(name);
   row.className = `persona-item role-card persona-status-card tone-${roleColor}`;
@@ -312,6 +409,7 @@ function renderPersonaEditor() {
   $("personaDescription").value = persona.description || "";
   $("personaCategories").value = (persona.categories || []).join(", ");
   $("personaPrompt").value = persona.prompt || "";
+  syncPersonaModelPicker();
 }
 
 function renderSessions() {
@@ -784,35 +882,77 @@ async function assignModel() {
 
 async function addProvider(event) {
   event.preventDefault();
-  const id = $("providerId").value.trim();
+  const editingId = state.editingProviderId;
+  const id = editingId || $("providerId").value.trim();
   const models = $("providerModels").value.split(",").map((item) => item.trim()).filter(Boolean);
   if (!id || !models.length) {
     alert("Provider ID 和模型列表不能为空。");
     return;
   }
+  const providers = [...(state.config.providers || [])];
+  const index = providers.findIndex((item) => item.id === id);
+  if (editingId && index < 0) {
+    alert("找不到要编辑的 Provider。");
+    cancelProviderEdit();
+    return;
+  }
+  if (!editingId && index >= 0) {
+    alert("Provider ID 已存在，请点编辑修改。");
+    return;
+  }
+  const existing = index >= 0 ? providers[index] : {};
+  const apiKey = $("providerApiKey").value.trim();
   const provider = {
+    ...existing,
     id,
     name: $("providerName").value.trim() || id,
     base_url: $("providerBaseUrl").value.trim(),
-    api_key: $("providerApiKey").value.trim(),
+    api_key: apiKey || (editingId ? existing.api_key : ""),
     available_models: models,
   };
-  const providers = [...(state.config.providers || [])];
-  const index = providers.findIndex((item) => item.id === id);
   if (index >= 0) {
-    providers[index] = { ...providers[index], ...provider };
+    providers[index] = provider;
   } else {
     providers.push(provider);
   }
   const nextConfig = { ...state.config, providers };
   if (!nextConfig.default_model?.provider_id) {
     nextConfig.default_model = { provider_id: id, model: models[0] };
+  } else if (nextConfig.default_model.provider_id === id && !models.includes(nextConfig.default_model.model)) {
+    nextConfig.default_model = { provider_id: id, model: models[0] };
   }
   state.config = await api("/api/config", {
     method: "POST",
     body: JSON.stringify(nextConfig),
   });
+  state.editingProviderId = null;
   $("providerForm").reset();
+  renderConfig();
+  renderModelPicker();
+  renderPersonas();
+}
+
+async function deleteProvider(providerId) {
+  const provider = providerById(providerId);
+  if (!provider) return;
+  const label = provider.name || provider.id;
+  if (!confirm(`删除 Provider「${label}」？`)) return;
+  const providers = (state.config.providers || []).filter((item) => item.id !== providerId);
+  const nextConfig = { ...state.config, providers };
+  if (nextConfig.default_model?.provider_id === providerId) {
+    const first = providers[0];
+    nextConfig.default_model = first
+      ? { provider_id: first.id, model: defaultProviderModel(first) }
+      : {};
+  }
+  state.config = await api("/api/config", {
+    method: "POST",
+    body: JSON.stringify(nextConfig),
+  });
+  if (state.editingProviderId === providerId) {
+    state.editingProviderId = null;
+    $("providerForm").reset();
+  }
   renderConfig();
   renderModelPicker();
   renderPersonas();
@@ -910,6 +1050,17 @@ async function savePersona(event) {
   renderPersonas();
 }
 
+async function createPersona() {
+  const created = await api("/api/personas", {
+    method: "POST",
+    body: JSON.stringify({ display_name: "新角色" }),
+  });
+  state.personas = await api("/api/personas");
+  state.currentPersonaId = created.id;
+  state.selectedPersonaIds.add(created.id);
+  renderPersonas();
+}
+
 async function clonePersona() {
   const persona = currentPersona();
   if (!persona) return;
@@ -928,8 +1079,11 @@ async function clonePersona() {
 async function archivePersona() {
   const persona = currentPersona();
   if (!persona) return;
+  if (!confirm(`删除角色「${persona.display_name || persona.id}」？`)) return;
   await api(`/api/personas/${persona.id}`, { method: "DELETE" });
   state.personas = await api("/api/personas");
+  state.selectedPersonaIds.delete(persona.id);
+  state.pendingSessionPersonaIds.delete(persona.id);
   state.currentPersonaId = state.personas[0]?.id || null;
   renderPersonas();
 }
@@ -986,7 +1140,9 @@ for (const button of document.querySelectorAll("[data-settings-tab]")) {
 }
 $("assignModel").onclick = runAction(assignModel);
 $("providerForm").onsubmit = runAction(addProvider);
+$("cancelProviderEdit").onclick = runAction(cancelProviderEdit);
 $("personaForm").onsubmit = runAction(savePersona);
+$("newPersona").onclick = runAction(createPersona);
 $("clonePersona").onclick = runAction(clonePersona);
 $("archivePersona").onclick = runAction(archivePersona);
 $("saveConfig").onclick = runAction(saveConfig);

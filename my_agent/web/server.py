@@ -73,8 +73,11 @@ def register_api_routes(app: FastAPI, service: WebAppService) -> None:
     @app.post("/api/personas", status_code=201)
     async def clone_persona(payload: dict[str, Any] = Body(default_factory=dict)):
         try:
+            source_persona_id = str(payload.get("source_persona_id") or "")
+            if not source_persona_id:
+                return service.create_persona(display_name=payload.get("display_name"))
             return service.clone_persona(
-                source_persona_id=str(payload.get("source_persona_id") or ""),
+                source_persona_id=source_persona_id,
                 display_name=payload.get("display_name"),
             )
         except ValueError as exc:

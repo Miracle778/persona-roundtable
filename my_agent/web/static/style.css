@@ -1046,6 +1046,18 @@ label span {
   flex: 0 0 auto;
 }
 
+.provider-actions {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.provider-delete-button {
+  color: var(--danger);
+}
+
 .provider-test-status {
   align-self: center;
   color: var(--muted);

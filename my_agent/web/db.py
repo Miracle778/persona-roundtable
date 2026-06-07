@@ -211,6 +211,37 @@ def clone_persona(
     return clone_id
 
 
+def create_persona(conn: sqlite3.Connection, display_name: str | None = None) -> str:
+    ensure_schema(conn)
+    now = now_iso()
+    persona_id = f"persona-{uuid4().hex[:10]}"
+    name = f"custom-{persona_id}"
+    conn.execute(
+        """
+        insert into personas (
+          id, source_skill_id, source_skill_path, name, display_name, description,
+          categories_json, prompt, role_rules, enabled, created_at, updated_at
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            persona_id,
+            None,
+            None,
+            name,
+            display_name or "新角色",
+            "",
+            "[]",
+            "",
+            "",
+            1,
+            now,
+            now,
+        ),
+    )
+    conn.commit()
+    return persona_id
+
+
 def update_persona(
     conn: sqlite3.Connection,
     persona_id: str,

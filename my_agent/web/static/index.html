@@ -168,14 +168,20 @@
                 <span>模型列表</span>
                 <input id="providerModels" placeholder="gpt-4.1, gpt-4o-mini" />
               </label>
-              <button id="addProvider" type="submit" class="primary">添加 Provider</button>
+              <div class="toolbar">
+                <button id="addProvider" type="submit" class="primary">添加 Provider</button>
+                <button id="cancelProviderEdit" type="button" class="ghost hidden">取消编辑</button>
+              </div>
             </form>
           </section>
 
           <section id="personaManagePanel" class="settings-panel hidden" data-settings-panel="personas">
             <header class="pane-head">
               <strong>角色管理</strong>
-              <button id="assignModel" type="button" class="secondary">分配模型</button>
+              <div class="toolbar">
+                <button id="newPersona" type="button" class="secondary">新增角色</button>
+                <button id="assignModel" type="button" class="secondary">分配模型</button>
+              </div>
             </header>
             <div class="model-picker">
               <select id="providerSelect"></select>
@@ -201,9 +207,9 @@
                   <textarea id="personaPrompt" rows="8" spellcheck="false"></textarea>
                 </label>
                 <div class="toolbar">
-                  <button id="savePersona" type="submit" class="primary">保存副本</button>
-                  <button id="clonePersona" type="button" class="secondary">新增副本</button>
-                  <button id="archivePersona" type="button" class="ghost">归档</button>
+                  <button id="savePersona" type="submit" class="primary">保存角色</button>
+                  <button id="clonePersona" type="button" class="secondary">复制角色</button>
+                  <button id="archivePersona" type="button" class="ghost">删除角色</button>
                 </div>
               </form>
             </div>

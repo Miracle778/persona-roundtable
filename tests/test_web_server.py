@@ -131,6 +131,16 @@ categories:
             self.assertEqual(patched["display_name"], "商业化测试角色")
             self.assertIn("persona 副本", patched["prompt"])
 
+            created_persona = await post_json(
+                client,
+                "/api/personas",
+                {"display_name": "自定义角色"},
+                expected_status=201,
+            )
+            self.assertTrue(created_persona["id"].startswith("persona-"))
+            self.assertIsNone(created_persona["source_skill_id"])
+            self.assertEqual(created_persona["display_name"], "自定义角色")
+
             session = await post_json(
                 client,
                 "/api/sessions",

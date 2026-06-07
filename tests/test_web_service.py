@@ -144,6 +144,104 @@ categories:
             self.assertEqual(archived["archived"], True)
             self.assertEqual([item["id"] for item in service.list_personas()], [source["id"]])
 
+    def test_create_update_and_archive_custom_persona(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            service = WebAppService(
+                db_path=root / "web.sqlite",
+                config_path=root / "config.json",
+                skill_dirs=[root / "skills"],
+            )
+            service.bootstrap()
+
+            created = service.create_persona(display_name="自定义角色")
+            self.assertTrue(created["id"].startswith("persona-"))
+            self.assertIsNone(created["source_skill_id"])
+            self.assertEqual(created["display_name"], "自定义角色")
+            self.assertEqual(created["categories"], [])
+            self.assertEqual(created["prompt"], "")
+
+            updated = service.update_persona(
+                created["id"],
+                {
+                    "display_name": "增长顾问",
+                    "description": "负责商业化验证",
+                    "categories": ["创业产品"],
+                    "prompt": "先判断用户是否愿意付费。",
+                },
+            )
+            self.assertEqual(updated["display_name"], "增长顾问")
+            self.assertEqual(updated["categories"], ["创业产品"])
+            self.assertIn("付费", updated["prompt"])
+
+            archived = service.archive_persona(created["id"])
+            self.assertEqual(archived["archived"], True)
+            self.assertNotIn(
+                created["id"],
+                [item["id"] for item in service.list_personas()],
+            )
+
+    def test_continue_session_uses_latest_persona_model_assignments(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            skill_dir = root / "skills" / "test-skill"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                """---
+name: test-perspective
+description: 测试角色
+categories:
+  - 创业产品
+---
+
+# 测试角色
+
+## 角色扮演规则
+
+保持清晰。
+""",
+                encoding="utf-8",
+            )
+            service = WebAppService(
+                db_path=root / "web.sqlite",
+                config_path=root / "config.json",
+                skill_dirs=[root / "skills"],
+            )
+            service.bootstrap()
+            source = service.list_personas()[0]
+            clone = service.clone_persona(source["id"], display_name="第二角色")
+            persona_ids = [source["id"], clone["id"]]
+
+            topic = service.refine_topic("我想讨论 AI 产品机会")
+            session = service.create_session(
+                raw_input="我想讨论 AI 产品机会",
+                topic=topic,
+                persona_ids=persona_ids,
+            )
+
+            service.assign_persona_model(
+                persona_ids=[source["id"]],
+                provider_id="openai",
+                model="gpt-4o",
+            )
+            service.assign_persona_model(
+                persona_ids=[clone["id"]],
+                provider_id="openai",
+                model="gpt-4o-mini",
+            )
+
+            updated = service.continue_session(session["id"], "继续从商业化角度说")
+            persona_messages = [
+                item for item in updated["messages"] if item["role"] == "persona"
+            ]
+            self.assertEqual(len(persona_messages), 2)
+            model_by_speaker = {
+                item["speaker"]: item["model"]
+                for item in persona_messages
+            }
+            self.assertEqual(model_by_speaker[source["display_name"]], "gpt-4o")
+            self.assertEqual(model_by_speaker[clone["display_name"]], "gpt-4o-mini")
+
     def test_refine_topic_uses_injected_llm_and_clarification_answers(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
