@@ -247,6 +247,74 @@ categories:
             self.assertEqual(model_by_speaker[source["display_name"]], "gpt-4o")
             self.assertEqual(model_by_speaker[clone["display_name"]], "gpt-4o-mini")
 
+    def test_update_session_persona_keeps_system_persona_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            skill_dir = root / "skills" / "test-skill"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                """---
+name: test-perspective
+description: 测试角色
+categories:
+  - 创业产品
+---
+
+# 测试角色
+
+## 角色扮演规则
+
+保持清晰。
+""",
+                encoding="utf-8",
+            )
+            service = WebAppService(
+                db_path=root / "web.sqlite",
+                config_path=root / "config.json",
+                skill_dirs=[root / "skills"],
+            )
+            service.bootstrap()
+            source = service.list_personas()[0]
+            service.assign_persona_model(
+                persona_ids=[source["id"]],
+                provider_id="openai",
+                model="gpt-4o",
+            )
+
+            topic = service.refine_topic("我想讨论 AI 产品机会")
+            session = service.create_session(
+                raw_input="我想讨论 AI 产品机会",
+                topic=topic,
+                persona_ids=[source["id"]],
+            )
+
+            updated_session = service.update_session_persona(
+                session_id=session["id"],
+                persona_id=source["id"],
+                updates={
+                    "display_name": "本场增长顾问",
+                    "prompt": "本场只讨论商业化验证。",
+                    "provider_id": "openai",
+                    "model": "gpt-4o-mini",
+                },
+            )
+            session_persona = updated_session["personas"][0]
+            self.assertEqual(session_persona["display_name_snapshot"], "本场增长顾问")
+            self.assertEqual(session_persona["prompt_snapshot"], "本场只讨论商业化验证。")
+            self.assertEqual(session_persona["provider_id_snapshot"], "openai")
+            self.assertEqual(session_persona["model_snapshot"], "gpt-4o-mini")
+
+            system_persona = service.list_personas()[0]
+            self.assertEqual(system_persona["display_name"], source["display_name"])
+            self.assertEqual(system_persona["model"], "gpt-4o")
+
+            continued = service.continue_session(session["id"], "继续说商业化")
+            persona_messages = [
+                item for item in continued["messages"] if item["role"] == "persona"
+            ]
+            self.assertEqual(persona_messages[-1]["speaker"], "本场增长顾问")
+            self.assertEqual(persona_messages[-1]["model"], "gpt-4o-mini")
+
     def test_refine_topic_uses_injected_llm_and_clarification_answers(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

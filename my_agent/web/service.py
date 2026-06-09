@@ -33,6 +33,7 @@ from my_agent.web.db import (
     list_sessions as db_list_sessions,
     record_message,
     search_sessions,
+    update_session_persona as db_update_session_persona,
     update_persona as db_update_persona,
 )
 from my_agent.web.topic import TopicCard, refine_topic
@@ -286,6 +287,28 @@ class WebAppService:
             raise RuntimeError(f"读取会话失败：{session_id}")
         return session
 
+    def update_session_persona(
+        self,
+        session_id: str,
+        persona_id: str,
+        updates: dict[str, Any],
+    ) -> dict[str, Any]:
+        with self.connection() as conn:
+            changed = db_update_session_persona(
+                conn,
+                session_id=session_id,
+                persona_id=persona_id,
+                **session_persona_updates_from_dict(updates),
+            )
+            if changed is None:
+                raise ValueError(f"找不到会话：{session_id}")
+            if not changed:
+                raise ValueError(f"找不到本场角色：{persona_id}")
+            session = get_session(conn, session_id)
+        if not session:
+            raise RuntimeError(f"读取会话失败：{session_id}")
+        return session
+
     def continue_session(self, session_id: str, user_message: str) -> dict[str, Any]:
         updated: dict[str, Any] | None = None
         for event in self.continue_session_events(session_id, user_message):
@@ -334,13 +357,13 @@ class WebAppService:
                     include_archived=True,
                 ) or {}
                 actual_provider = (
-                    live_persona.get("provider_id")
-                    or persona.get("provider_id_snapshot")
+                    persona.get("provider_id_snapshot")
+                    or live_persona.get("provider_id")
                     or provider_id
                 )
                 actual_model = (
-                    live_persona.get("model")
-                    or persona.get("model_snapshot")
+                    persona.get("model_snapshot")
+                    or live_persona.get("model")
                     or model
                 )
                 started_at = time.monotonic()
@@ -457,6 +480,19 @@ def normalize_optional_string(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def session_persona_updates_from_dict(updates: dict[str, Any]) -> dict[str, Any]:
+    mapped: dict[str, Any] = {}
+    if "display_name" in updates:
+        mapped["display_name_snapshot"] = string_or_none(updates.get("display_name"))
+    if "prompt" in updates:
+        mapped["prompt_snapshot"] = string_or_none(updates.get("prompt"))
+    if "provider_id" in updates:
+        mapped["provider_id_snapshot"] = normalize_optional_string(updates.get("provider_id"))
+    if "model" in updates:
+        mapped["model_snapshot"] = normalize_optional_string(updates.get("model"))
+    return mapped
 
 
 def next_round_index(messages: list[dict[str, Any]]) -> int:

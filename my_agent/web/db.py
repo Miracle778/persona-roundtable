@@ -12,6 +12,7 @@ from my_agent.web.topic import TopicCard
 
 
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "my_agent" / "web.sqlite"
+UNSET = object()
 
 
 def connect(path: Path | str | None = None) -> sqlite3.Connection:
@@ -435,6 +436,54 @@ def add_session_personas(
     )
     conn.commit()
     return changed
+
+
+def update_session_persona(
+    conn: sqlite3.Connection,
+    session_id: str,
+    persona_id: str,
+    *,
+    display_name_snapshot: str | None | object = UNSET,
+    prompt_snapshot: str | None | object = UNSET,
+    provider_id_snapshot: str | None | object = UNSET,
+    model_snapshot: str | None | object = UNSET,
+) -> int | None:
+    ensure_schema(conn)
+    session = conn.execute("select id from sessions where id = ?", (session_id,)).fetchone()
+    if not session:
+        return None
+    fields: list[str] = []
+    values: list[Any] = []
+    if display_name_snapshot is not UNSET:
+        fields.append("display_name_snapshot = ?")
+        values.append(display_name_snapshot)
+    if prompt_snapshot is not UNSET:
+        fields.append("prompt_snapshot = ?")
+        values.append(prompt_snapshot)
+    if provider_id_snapshot is not UNSET:
+        fields.append("provider_id_snapshot = ?")
+        values.append(provider_id_snapshot)
+    if model_snapshot is not UNSET:
+        fields.append("model_snapshot = ?")
+        values.append(model_snapshot)
+    if not fields:
+        return 0
+    values.extend([session_id, persona_id])
+    cursor = conn.execute(
+        f"""
+        update session_personas
+        set {', '.join(fields)}
+        where session_id = ? and persona_id = ?
+        """,
+        values,
+    )
+    if cursor.rowcount:
+        conn.execute(
+            "update sessions set updated_at = ? where id = ?",
+            (now_iso(), session_id),
+        )
+    conn.commit()
+    return cursor.rowcount
 
 
 def record_message(

@@ -155,6 +155,21 @@ def register_api_routes(app: FastAPI, service: WebAppService) -> None:
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
+    @app.patch("/api/sessions/{session_id}/personas/{persona_id}")
+    async def update_session_persona(
+        session_id: str,
+        persona_id: str,
+        payload: dict[str, Any] = Body(default_factory=dict),
+    ):
+        try:
+            return service.update_session_persona(
+                session_id=session_id,
+                persona_id=persona_id,
+                updates=payload,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
     @app.post("/api/sessions/{session_id}/messages", status_code=201)
     async def continue_session(
         session_id: str,

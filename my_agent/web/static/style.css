@@ -13,6 +13,7 @@
   --muted: #94A3B8;
   --muted-light: #CBD5E1;
   --danger: #F87171;
+  --header-height: 64px;
 
   /* 角色主题色 */
   --role-blue: #3B82F6;
@@ -147,7 +148,7 @@ label span {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 64px;
+  min-height: var(--header-height);
   padding: 16px 24px;
   background: var(--panel);
 }
@@ -165,7 +166,7 @@ label span {
 
 .app-body {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr) 240px;
+  grid-template-columns: 300px minmax(0, 1fr) 360px;
   gap: 1px;
   min-height: 0;
   background: var(--line);
@@ -713,6 +714,9 @@ label span {
   background: var(--panel);
   padding: 0 16px 16px;
   gap: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 .control-pane > section:first-child {
@@ -722,22 +726,114 @@ label span {
   flex: 1;
 }
 
+.session-persona-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
+}
+
+.session-persona-body {
+  position: relative;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.session-persona-shell .persona-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  padding-right: 8px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.session-persona-tabs {
+  display: none;
+  align-items: center;
+  gap: 18px;
+  padding: 0 2px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.control-pane.session-active .session-persona-tabs {
+  display: flex;
+}
+
+.session-persona-tab {
+  min-height: 0;
+  padding: 0 0 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.session-persona-tab:hover {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text);
+}
+
+.session-persona-tab.is-active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.control-pane,
+.session-persona-shell .persona-list,
+.session-persona-editor {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+}
+
+.control-pane::-webkit-scrollbar,
+.session-persona-shell .persona-list::-webkit-scrollbar,
+.session-persona-editor::-webkit-scrollbar {
+  width: 8px;
+}
+
+.control-pane::-webkit-scrollbar-thumb,
+.session-persona-shell .persona-list::-webkit-scrollbar-thumb,
+.session-persona-editor::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.36);
+  border-radius: 999px;
+}
+
 /* 角色列表卡片 - 角色色半透卡 */
 .persona-item.role-card {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  align-items: start;
-  gap: 10px;
-  padding: 14px;
-  margin-bottom: 10px;
+  grid-template-columns: 12px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px 14px;
+  margin-bottom: 0;
   border-radius: 10px;
   border: 1px solid transparent;
   transition: all 0.15s ease;
   cursor: pointer;
 }
 
+.persona-item.role-card > .persona-dot {
+  width: 8px;
+  height: 40px;
+  border-radius: 999px;
+  align-self: center;
+}
+
 .persona-status-card {
   cursor: default;
+}
+
+.session-persona-card {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
 }
 
 .persona-check-card,
@@ -773,6 +869,32 @@ label span {
 .persona-item.tone-amber .persona-info .meta { color: #FBBF24; }
 .persona-item.tone-orange .persona-info .meta { color: #FB923C; }
 .persona-item.tone-pink .persona-info .meta { color: #F472B6; }
+
+.persona-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.persona-card-head strong {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.persona-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.persona-card-head strong,
+.persona-info .meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .persona-item:hover {
   opacity: 0.9;
@@ -862,9 +984,78 @@ label span {
   background: rgba(30, 41, 59, 0.55);
 }
 
+.session-persona-editor {
+  position: fixed;
+  top: var(--header-height);
+  right: 0;
+  bottom: 0;
+  width: min(520px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-right: 0;
+  border-radius: 14px 0 0 14px;
+  background: rgba(15, 23, 42, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: -18px 0 32px rgba(2, 6, 23, 0.42);
+  overflow-y: auto;
+  transform: translateX(104%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.22s ease, opacity 0.18s ease;
+  z-index: 40;
+}
+
+.session-persona-editor.is-open {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.session-persona-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: sticky;
+  top: -16px;
+  padding: 0 0 12px;
+  background: rgba(15, 23, 42, 0.98);
+  z-index: 1;
+}
+
+.session-persona-editor-title {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.session-persona-source-meta {
+  margin: -2px 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.session-model-picker {
+  padding: 0;
+}
+
 #personaPrompt {
   min-height: 180px;
   max-height: 360px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+#sessionPersonaPrompt {
+  min-height: 180px;
+  max-height: 320px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   line-height: 1.5;

@@ -4,11 +4,13 @@ const state = {
   sessions: [],
   currentSession: null,
   currentPersonaId: null,
+  currentSessionPersonaId: null,
   topic: null,
   mode: "idle",
   topicCardExpanded: false,
   sending: false,
   sessionPersonaPickerOpen: false,
+  sessionPersonaView: "list",
   pendingSessionPersonaIds: new Set(),
   selectedPersonaIds: new Set(),
   editingProviderId: null,
@@ -208,15 +210,34 @@ function personaRecordId(persona) {
   return persona?.id || persona?.persona_id || null;
 }
 
+function isSessionPersona(persona) {
+  return Boolean(persona && Object.prototype.hasOwnProperty.call(persona, "persona_id"));
+}
+
 function livePersona(persona) {
   const id = personaRecordId(persona);
   if (!id) return null;
   return state.personas.find((item) => item.id === id) || null;
 }
 
+function systemPersonaForSessionPersona(persona) {
+  if (!isSessionPersona(persona)) return livePersona(persona);
+  return livePersona({ id: persona.persona_id });
+}
+
 function displayPersonaModel(persona) {
   const live = livePersona(persona);
-  return live?.model || persona.model || persona.model_snapshot || "默认模型";
+  if (isSessionPersona(persona)) {
+    return persona.model_snapshot || live?.model || "默认模型";
+  }
+  return live?.model || persona.model || "默认模型";
+}
+
+function compactText(value, limit = 88) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  if (text.length <= limit) return text;
+  return `${text.slice(0, limit - 1).trimEnd()}…`;
 }
 
 function syncPersonaModelPicker() {
@@ -272,16 +293,21 @@ function cancelProviderEdit() {
 
 function renderPersonas() {
   ensurePersonaSelection();
+  ensureSessionPersonaSelection();
   const statusContainer = $("personaList");
   const manageContainer = $("personaManageList");
+  const controlPane = $("controlPane");
   statusContainer.innerHTML = "";
   manageContainer.innerHTML = "";
   const displayPersonas = currentDisplayPersonas();
   $("personaCount").textContent = `${displayPersonas.length} 位`;
+  controlPane.classList.toggle("session-active", Boolean(state.currentSession));
   if (!displayPersonas.length) {
     const empty = document.createElement("div");
     empty.className = "persona-empty";
-    empty.textContent = "还没有选择本场嘉宾";
+    empty.textContent = state.currentSession
+      ? "本场讨论还没有嘉宾"
+      : "选择一场讨论后，这里才会展示本场嘉宾";
     statusContainer.appendChild(empty);
   }
   for (const persona of displayPersonas) {
@@ -296,6 +322,8 @@ function renderPersonas() {
   renderDiscussionPersonaList();
   renderSessionPersonaList();
   renderPersonaEditor();
+  renderSessionPersonaTabs();
+  renderSessionPersonaEditor();
 }
 
 function ensurePersonaSelection() {
@@ -307,26 +335,55 @@ function ensurePersonaSelection() {
   state.selectedPersonaIds = new Set(state.personas.map((persona) => persona.id));
 }
 
+function ensureSessionPersonaSelection() {
+  const sessionPersonaIds = new Set(
+    (state.currentSession?.personas || []).map((persona) => persona.persona_id),
+  );
+  if (!sessionPersonaIds.size) {
+    state.currentSessionPersonaId = null;
+    state.sessionPersonaView = "list";
+    return;
+  }
+  if (state.currentSessionPersonaId && sessionPersonaIds.has(state.currentSessionPersonaId)) return;
+  state.currentSessionPersonaId = null;
+  state.sessionPersonaView = "list";
+}
+
 function createPersonaStatusRow(persona) {
-  const row = document.createElement("div");
+  const row = document.createElement(isSessionPersona(persona) ? "button" : "div");
+  if (row instanceof HTMLButtonElement) row.type = "button";
   const name = persona.display_name || persona.display_name_snapshot;
   const model = displayPersonaModel(persona);
-  const categories = persona.categories || [];
   const roleColor = getRoleColor(name);
   row.className = `persona-item role-card persona-status-card tone-${roleColor}`;
+  if (isSessionPersona(persona)) row.classList.add("session-persona-card");
+  if (isSessionPersona(persona) && state.currentSessionPersonaId === persona.persona_id) {
+    row.classList.add("active");
+  }
   row.innerHTML = `
     <span class="persona-dot ${roleColor}" aria-hidden="true"></span>
-    <span class="persona-info">
-      <strong>${escapeHtml(name)}</strong>
-      <span class="meta">${escapeHtml(categories.join(" / ") || "本场角色")} · ${escapeHtml(model)}</span>
-    </span>
+      <span class="persona-info">
+        <span class="persona-card-head">
+          <strong>${escapeHtml(name)}</strong>
+        </span>
+        <span class="meta">${escapeHtml(model)}</span>
+      </span>
   `;
+  if (isSessionPersona(persona)) {
+    row.onclick = runAction(() => selectSessionPersona(persona.persona_id));
+  }
   return row;
 }
 
 function currentDisplayPersonas() {
-  if (state.currentSession?.personas?.length) return state.currentSession.personas;
-  return state.personas.filter((persona) => state.selectedPersonaIds.has(persona.id));
+  if (!state.currentSession?.personas?.length) return [];
+  return state.currentSession.personas;
+}
+
+function switchSessionPersonaView(view) {
+  if (view === "editor" && !currentSessionPersona()) return;
+  state.sessionPersonaView = view;
+  renderPersonas();
 }
 
 function createPersonaManageRow(persona) {
@@ -409,8 +466,25 @@ function currentPersona() {
   return state.personas.find((persona) => persona.id === state.currentPersonaId) || null;
 }
 
+function currentSessionPersona() {
+  return (state.currentSession?.personas || []).find(
+    (persona) => persona.persona_id === state.currentSessionPersonaId,
+  ) || null;
+}
+
 function selectPersona(id) {
   state.currentPersonaId = id;
+  renderPersonas();
+}
+
+function selectSessionPersona(id) {
+  state.currentSessionPersonaId = id;
+  state.sessionPersonaView = "editor";
+  renderPersonas();
+}
+
+function closeSessionPersonaEditor() {
+  state.sessionPersonaView = "list";
   renderPersonas();
 }
 
@@ -423,6 +497,62 @@ function renderPersonaEditor() {
   $("personaCategories").value = (persona.categories || []).join(", ");
   $("personaPrompt").value = persona.prompt || "";
   syncPersonaModelPicker();
+}
+
+function syncSessionPersonaModelPicker() {
+  renderProviderModelPicker("sessionProviderSelect", "sessionModelSelect");
+  const providerSelect = $("sessionProviderSelect");
+  const modelSelect = $("sessionModelSelect");
+  const providers = state.config?.providers || [];
+  if (!providers.length) return;
+  const persona = currentSessionPersona();
+  const sourcePersona = systemPersonaForSessionPersona(persona);
+  const fallbackProviderId = (
+    persona?.provider_id_snapshot
+    || sourcePersona?.provider_id
+    || state.config?.default_model?.provider_id
+    || providers[0].id
+  );
+  providerSelect.value = providers.some((provider) => provider.id === fallbackProviderId)
+    ? fallbackProviderId
+    : providers[0].id;
+  renderModels("sessionProviderSelect", "sessionModelSelect");
+  const provider = providerById(providerSelect.value) || providers[0];
+  const desiredModel = (
+    persona?.model_snapshot
+    || sourcePersona?.model
+    || defaultProviderModel(provider)
+  );
+  ensureModelOption(modelSelect, desiredModel);
+  modelSelect.value = desiredModel;
+}
+
+function renderSessionPersonaTabs() {
+  const hasSession = Boolean(state.currentSession);
+  const hasEditor = Boolean(currentSessionPersona());
+  const listTab = $("sessionPersonaListTab");
+  const editorTab = $("sessionPersonaEditorTab");
+  listTab.classList.toggle("is-active", state.sessionPersonaView !== "editor");
+  editorTab.classList.toggle("is-active", state.sessionPersonaView === "editor" && hasEditor);
+  listTab.disabled = !hasSession;
+  $("sessionPersonaEditorTab").disabled = !hasEditor;
+}
+
+function renderSessionPersonaEditor() {
+  const body = $("sessionPersonaBody");
+  const editor = $("sessionPersonaEditor");
+  const sessionPersona = currentSessionPersona();
+  const showEditor = Boolean(state.currentSession && sessionPersona && state.sessionPersonaView === "editor");
+  body.classList.toggle("editor-open", showEditor);
+  editor.classList.toggle("is-open", showEditor);
+  editor.setAttribute("aria-hidden", String(!showEditor));
+  if (!showEditor) return;
+  $("sessionPersonaEditorTitle").textContent = sessionPersona.display_name_snapshot || "本场角色微调";
+  $("sessionPersonaScope").textContent = "仅本场";
+  $("sessionPersonaSourceMeta").textContent = "只影响当前会话，不会改系统角色";
+  $("sessionPersonaName").value = sessionPersona.display_name_snapshot || "";
+  $("sessionPersonaPrompt").value = sessionPersona.prompt_snapshot || "";
+  syncSessionPersonaModelPicker();
 }
 
 function renderSessions() {
@@ -538,7 +668,9 @@ async function openSession(id) {
   state.currentSession = await api(`/api/sessions/${id}`);
   state.mode = "session";
   state.sessionPersonaPickerOpen = false;
+  state.sessionPersonaView = "list";
   state.pendingSessionPersonaIds = new Set();
+  state.currentSessionPersonaId = null;
   renderWorkSurface();
   renderMessages();
   renderPersonas();
@@ -548,6 +680,8 @@ async function openSession(id) {
 function startDiscussion() {
   state.mode = "composing";
   state.currentSession = null;
+  state.sessionPersonaView = "list";
+  state.currentSessionPersonaId = null;
   state.topic = null;
   state.topicCardExpanded = false;
   state.sessionPersonaPickerOpen = false;
@@ -766,7 +900,9 @@ async function createSession() {
   state.currentSession = session;
   state.mode = "session";
   state.sessionPersonaPickerOpen = false;
+  state.sessionPersonaView = "list";
   state.pendingSessionPersonaIds = new Set();
+  state.currentSessionPersonaId = null;
   await refreshSessions();
   renderWorkSurface();
   renderMessages();
@@ -1020,7 +1156,9 @@ async function addSessionPersonas() {
     body: JSON.stringify({ persona_ids: personaIds }),
   });
   state.sessionPersonaPickerOpen = false;
+  state.sessionPersonaView = "list";
   state.pendingSessionPersonaIds = new Set();
+  state.currentSessionPersonaId = null;
   renderWorkSurface();
   renderMessages();
   renderPersonas();
@@ -1108,6 +1246,26 @@ async function archivePersona() {
   renderPersonas();
 }
 
+async function saveSessionPersona() {
+  const persona = currentSessionPersona();
+  if (!state.currentSession || !persona) return;
+  state.currentSession = await api(
+    `/api/sessions/${state.currentSession.id}/personas/${persona.persona_id}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        display_name: $("sessionPersonaName").value.trim(),
+        prompt: $("sessionPersonaPrompt").value,
+        provider_id: $("sessionProviderSelect").value,
+        model: $("sessionModelSelect").value,
+      }),
+    },
+  );
+  renderWorkSurface();
+  renderMessages();
+  renderPersonas();
+}
+
 async function saveConfig() {
   const config = JSON.parse($("configJson").value);
   state.config = await api("/api/config", {
@@ -1152,6 +1310,9 @@ $("messageForm").onsubmit = runAction(sendMessage);
 $("sessionAddPersona").onclick = runAction(openSessionPersonaPicker);
 $("confirmSessionPersonas").onclick = runAction(addSessionPersonas);
 $("cancelSessionPersonas").onclick = runAction(closeSessionPersonaPicker);
+$("sessionPersonaListTab").onclick = runAction(() => switchSessionPersonaView("list"));
+$("sessionPersonaEditorTab").onclick = runAction(() => switchSessionPersonaView("editor"));
+$("closeSessionPersonaEditor").onclick = runAction(closeSessionPersonaEditor);
 $("openSettings").onclick = runAction(openSettings);
 $("closeSettings").onclick = runAction(closeSettings);
 $("settingsOverlay").onclick = runAction(closeSettings);
@@ -1165,6 +1326,7 @@ $("personaForm").onsubmit = runAction(savePersona);
 $("newPersona").onclick = runAction(createPersona);
 $("clonePersona").onclick = runAction(clonePersona);
 $("archivePersona").onclick = runAction(archivePersona);
+$("saveSessionPersona").onclick = runAction(saveSessionPersona);
 $("saveConfig").onclick = runAction(saveConfig);
 
 loadAll().catch(showError);

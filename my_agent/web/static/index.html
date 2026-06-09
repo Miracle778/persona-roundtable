@@ -110,16 +110,50 @@
       </form>
     </section>
 
-    <aside class="control-pane">
+    <aside id="controlPane" class="control-pane">
       <section>
         <header class="pane-head">
           <strong>🎭 本场嘉宾</strong>
           <span id="personaCount" class="status-chip">0 位</span>
         </header>
-        <div id="personaList" class="persona-list" aria-label="角色列表"></div>
+        <div id="sessionPersonaShell" class="session-persona-shell">
+          <div id="sessionPersonaTabs" class="session-persona-tabs" aria-label="本场嘉宾视图">
+            <button id="sessionPersonaListTab" type="button" class="session-persona-tab is-active">嘉宾列表</button>
+            <button id="sessionPersonaEditorTab" type="button" class="session-persona-tab" disabled>角色微调</button>
+          </div>
+          <div id="sessionPersonaBody" class="session-persona-body">
+            <div id="personaList" class="persona-list" aria-label="角色列表"></div>
+          </div>
+        </div>
       </section>
     </aside>
     </div>
+
+    <section id="sessionPersonaEditor" class="session-persona-editor" aria-hidden="true">
+      <div class="session-persona-editor-head">
+        <div class="session-persona-editor-title">
+          <strong id="sessionPersonaEditorTitle">本场角色微调</strong>
+          <span id="sessionPersonaScope" class="status-chip">仅本场</span>
+        </div>
+        <button id="closeSessionPersonaEditor" type="button" class="ghost">收起</button>
+      </div>
+      <p id="sessionPersonaSourceMeta" class="session-persona-source-meta"></p>
+      <label>
+        <span>本场显示名</span>
+        <input id="sessionPersonaName" />
+      </label>
+      <div class="model-picker session-model-picker">
+        <select id="sessionProviderSelect"></select>
+        <select id="sessionModelSelect"></select>
+      </div>
+      <label>
+        <span>本场角色 Prompt</span>
+        <textarea id="sessionPersonaPrompt" rows="8" spellcheck="false"></textarea>
+      </label>
+      <div class="toolbar">
+        <button id="saveSessionPersona" type="button" class="primary">保存本场角色</button>
+      </div>
+    </section>
 
     <div id="settingsOverlay" class="settings-overlay hidden"></div>
     <aside id="settingsDrawer" class="settings-drawer hidden" aria-label="设置">

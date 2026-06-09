@@ -168,6 +168,21 @@ categories:
                 "商业化测试角色",
                 [item["display_name_snapshot"] for item in expanded_session["personas"]],
             )
+            tuned_session = await request_json(
+                client,
+                "PATCH",
+                f"/api/sessions/{session['id']}/personas/{clone['id']}",
+                {
+                    "display_name": "本场商业化测试角色",
+                    "prompt": "本场只聊商业化验证。",
+                    "provider_id": "openai",
+                    "model": "gpt-4o-mini",
+                },
+            )
+            self.assertIn(
+                "本场商业化测试角色",
+                [item["display_name_snapshot"] for item in tuned_session["personas"]],
+            )
 
             updated = await post_json(
                 client,
@@ -176,6 +191,10 @@ categories:
                 expected_status=201,
             )
             self.assertGreaterEqual(len(updated["messages"]), 3)
+            self.assertIn(
+                "本场商业化测试角色",
+                [item["speaker"] for item in updated["messages"] if item["role"] == "persona"],
+            )
 
             stream_text = await stream_text_response(
                 client,
