@@ -788,6 +788,158 @@ def merge_promoted(existing: PromotedTools | None, new: PromotedTools | None) ->
 
 **学习启示**：这是个**版本隔离合并**的模式——合并时带版本号，版本变了就不合并。在缓存、配置同步、状态合并场景都适用。
 
+#### (c-补充) merge_promoted 彻底搞懂——一个完整的故事
+
+如果你看完上面还觉得模糊，这里用一个**从头到尾的故事**把每个环节串起来。
+
+**第 1 步：什么是"延迟工具（deferred tools）"？为什么需要它？**
+
+DeerFlow 可以接入很多 MCP 工具（Slack、GitHub、Playwright……可能几十上百个）。如果把这些工具的**完整 JSON Schema**（参数定义、描述……）全发给模型，会**撑爆上下文窗口**。
+
+DeerFlow 的解法是"延迟加载"：
+
+```
+初始状态（模型看到的）：
+  system prompt 里只有工具名列表：
+    <available-deferred-tools>
+    slack_send_message
+    slack_list_channels
+    github_create_issue
+    ...（100 个名字，但没有 schema）
+    </available-deferred-tools>
+
+  → 模型知道"有这些工具"，但不知道参数怎么填
+  → 模型没法直接调用它们
+```
+
+**第 2 步：模型想用某个工具时怎么办？**
+
+模型必须**先调 `tool_search` 工具**，把目标工具的 schema "搜索"出来。看 `tools/builtins/tool_search.py:130-158`：
+
+```python
+def build_tool_search_tool(catalog: DeferredToolCatalog) -> BaseTool:
+    catalog_hash = catalog.hash     # ★ 把 catalog_hash 闭包进 tool_search
+
+    @tool
+    def tool_search(query: str, tool_call_id: ...) -> Command:
+        matched = catalog.search(query)[:MAX_RESULTS]
+        content = json.dumps([convert_to_openai_function(t) for t in matched], ...)
+        names = [t.name for t in matched]
+        return Command(
+            update={
+                "promoted": {"catalog_hash": catalog_hash, "names": names},  # ★ 写 state
+                "messages": [ToolMessage(content=content, ...)],
+            }
+        )
+```
+
+**关键**：`tool_search` 返回一个 LangGraph 的 `Command(update={...})`，它把 `{catalog_hash, names}` 写进 `state["promoted"]` 字段。这就是 promotion（提升）——从"隐藏"变成"可见"。
+
+**第 3 步：promote 之后，模型怎么"获得"调用权？**
+
+靠 `DeferredToolFilterMiddleware`（`deferred_tool_filter_middleware.py:42-60`）：
+
+```python
+def _promoted(self, state) -> set[str]:
+    promoted = (state or {}).get("promoted")
+    if promoted and promoted.get("catalog_hash") == self._catalog_hash:  # ★ 再校验 hash
+        return set(promoted.get("names") or [])
+    return set()
+
+def _hidden(self, state) -> set[str]:
+    return set(self._deferred) - self._promoted(state)   # 延迟工具 - 已提升 = 仍隐藏
+
+def _filter_tools(self, request: ModelRequest) -> ModelRequest:
+    hide = self._hidden(request.state)
+    active = [t for t in request.tools if t.name not in hide]  # 从发给模型的全集里删掉隐藏的
+    return request.override(tools=active)
+```
+
+**每次调模型前**（`wrap_model_call`），这个中间件会把"还没 promoted 的延迟工具"的 schema **从 request.tools 里删掉**。模型只看到已提升的工具 schema。
+
+**第 4 步：为什么合并时需要 `catalog_hash`？（核心问题）**
+
+`catalog_hash` 是工具目录的 **SHA256 指纹**（`tool_search.py:66-70`）：
+
+```python
+@cached_property
+def hash(self) -> str:
+    canon = [{"name": t.name, "schema": convert_to_openai_function(t)} 
+             for t in sorted(self.tools, key=lambda t: t.name)]
+    blob = json.dumps(canon, sort_keys=True, ...)
+    return hashlib.sha256(blob.encode()).hexdigest()[:16]
+```
+
+它把**所有延迟工具的名字+schema**序列化排序后算哈希。**任何工具的新增/删除/改名/改参数都会让 hash 变**。
+
+现在看 merge_promoted 的**三种情况**，用真实场景讲：
+
+**情况 A：`new` 是 None → 保留旧值**
+
+```
+某个中间件跑完（比如 DynamicContext），它根本没碰 promoted 字段。
+LangGraph 传进来：new = None
+→ 返回 existing（原样保留）
+
+跟 merge_todos 一样：区分"没动"和"清空"。
+```
+
+**情况 B：`catalog_hash` 变了 → 整体替换（★ 最关键的安全机制）**
+
+想象这个灾难场景（如果不整体替换）：
+
+```
+Day 1：工具目录 catalog_hash = "abc"
+  模型调 tool_search("read")
+  promoted = {"catalog_hash":"abc", "names":["read"]}
+  （"read" 是"读取本地文档"工具）
+
+Day 2：MCP server 重启，工具列表变了
+  "read" 这个名字被复用给了完全不同的工具（比如"读取 GitHub repo"）
+  新的 catalog_hash = "xyz"
+
+Day 3：对话继续（thread 还活着，state 里有旧的 promoted）
+  如果 reducer 只是简单合并 names：
+    existing = {"catalog_hash":"abc", "names":["read"]}
+    new      = {"catalog_hash":"xyz", "names":["write"]}
+    合并     → {"names":["read","write"]}  ← 灾难！
+
+  此时 "read" 已经指向完全不同的工具了！
+  模型以为提升的是"读文档"，实际暴露的是"读 GitHub repo"
+  → 可能误操作别人的仓库
+```
+
+**所以 `catalog_hash` 变了 = 工具世界变了，旧 promotion 全部作废**：
+
+```python
+# 情况 B：hash 变了，整体替换
+existing = {"catalog_hash":"abc", "names":["read","old_tool"]}
+new      = {"catalog_hash":"xyz", "names":["write"]}
+→ 返回 {"catalog_hash":"xyz", "names":["write"]}
+# 旧的 "read" 被丢弃了——因为它可能指向完全不同的工具！
+```
+
+**情况 C：`catalog_hash` 没变 → 并集合并**
+
+```
+同一个工具目录下，模型多次调 tool_search：
+  第 1 次：promoted = {"catalog_hash":"abc", "names":["slack_send"]}
+  第 2 次：promoted = {"catalog_hash":"abc", "names":["github_issue"]}
+
+reducer 合并（hash 一样，走并集）：
+  → {"catalog_hash":"abc", "names":["slack_send","github_issue"]}
+```
+
+用 `dict.fromkeys` 去重保序——防模型重复 search 同一个工具。
+
+**双保险**：reducer 里校验 hash 一次，`_promoted()` 运行时读 state 时**再校验一次**。即使 state 里存了旧 hash 的 promotion，运行时也不会认。
+
+**一句话总结 merge_promoted**：
+
+> **它是个"带版本隔离的并集合并" reducer。同版本（hash 一样）→ 合并工具名；跨版本（hash 变了）→ 整体替换（旧 promotion 作废，防"名字复用"安全事故）；没动 → 保留旧值。**
+
+---
+
 > 📌 **Reducer 的核心价值**：让 LangGraph 能**安全地并发**。多个节点同时往同一个字段写，reducer 决定结果。没有 reducer，并发就会"丢更新"。
 
 ## 1.7 配料之二：`build_middlewares`——中间件管道
@@ -1064,6 +1216,190 @@ middlewares = build_lead_runtime_middlewares(app_config=resolved_app_config, laz
 - 第 3 章的记忆 → Memory + DynamicContext；
 - 第 4 章的上下文压缩 → Summarization + DynamicContext + DeferredToolFilter；
 - 第 6 章的循环检测、安全、HITL → LoopDetection + SafetyFinishReason + Clarification。
+
+### 1.7.5 补充：装配顺序 vs 执行顺序——不同 hook 的规则不同！
+
+这是一个**极其容易踩坑**的点，必须单独讲：**"装配顺序"（append 顺序）和"执行顺序"的对应关系，不同 hook 是不一样的！**
+
+#### 先回顾 6 个 hook
+
+每个中间件可以实现这 6 个 hook 中的任意几个：
+
+```
+before_agent → before_model → [wrap_model_call] → after_model
+                                    ↓
+                            [wrap_tool_call]
+                                    ↓
+                              after_agent
+```
+
+#### 核心：不同 hook 的执行顺序规则不同
+
+假设 `build_middlewares` 按这个顺序 append：
+
+```python
+middlewares = []
+middlewares.append(A())    # index 0（最先装）
+middlewares.append(B())    # index 1
+middlewares.append(C())    # index 2（最后装）
+```
+
+**各 hook 的执行顺序**：
+
+| Hook | 执行顺序 | 类型 |
+|---|---|---|
+| `before_agent` | A → B → C | **正序** |
+| `before_model` | A → B → C | **正序** |
+| `wrap_model_call` | A(B(C(...))) | **洋葱式**（A 最外层） |
+| `wrap_tool_call` | A(B(C(...))) | **洋葱式**（A 最外层） |
+| **`after_model`** | **C → B → A** | **★ 逆序！** |
+| `after_agent` | C → B → A | **★ 逆序！** |
+
+#### 为什么 `after_*` 要逆序？
+
+因为 `after_*` 是 `before_*` 的"配对收尾"。想象函数调用栈——**先入后出（LIFO）**：
+
+```
+正序进入（before）：  A 进 → B 进 → C 进 → 【干活】 
+逆序退出（after）：                        【干完】 → C 出 → B 出 → A 出
+```
+
+这跟 Python 的 `with` context manager 或装饰器嵌套一模一样：
+
+```python
+# before/after 的等效嵌套
+def combined():
+    A.before_model()         # 第 1 个进
+    B.before_model()         # 第 2 个进
+    C.before_model()         # 第 3 个进
+    # ====== model.invoke ======
+    result = model.invoke()
+    # ===========================
+    C.after_model(result)    # 第 1 个出（逆序！）
+    B.after_model(result)    # 第 2 个出
+    A.after_model(result)    # 第 3 个出
+```
+
+**这才是"洋葱"的完整形态**——不只是 `wrap_model_call` 是洋葱，**整个 before→干→after 的流程都是洋葱**：
+
+```
+A.before_model()           ← 正序进
+  └─ B.before_model()
+       └─ C.before_model()
+            ┌──────────────┐
+            │ model.invoke  │  ← 洋葱芯
+            └──────────────┘
+       C.after_model()      ← 逆序出
+  B.after_model()
+A.after_model()
+```
+
+#### `wrap_model_call` 的洋葱式怎么理解？
+
+`wrap_model_call` 是真正的"包裹"——它**包住整个模型调用**，能改 request 也能改 response。假设装配顺序还是 A、B、C：
+
+```python
+def A.wrap_model_call(request, handler):
+    print("A: 进")
+    response = handler(request)   # handler = B.wrap_model_call
+    print("A: 出")
+    return response
+
+def B.wrap_model_call(request, handler):
+    print("B: 进")
+    response = handler(request)   # handler = C.wrap_model_call
+    print("B: 出")
+    return response
+
+def C.wrap_model_call(request, handler):
+    print("C: 进")
+    response = handler(request)   # handler = model.invoke（真正的调用）
+    print("C: 出")
+    return response
+```
+
+**执行时**：
+
+```
+A: 进
+  B: 进
+    C: 进
+      ===== model.invoke() =====
+    C: 出
+  B: 出
+A: 出
+```
+
+**A 是最外层**（第一个装的），C 是最内层（最后装的）。A 第一个进、最后一个出，能看到完整的请求和响应——这就是"洋葱"的精髓。
+
+#### 用 DeerFlow 真实例子验证
+
+看 `agent.py:366-377`，装配顺序的**最后两个**：
+
+```python
+middlewares.append(SafetyFinishReasonMiddleware(...))  # 倒数第 2
+middlewares.append(ClarificationMiddleware())          # 最后（index 最大）
+```
+
+**`after_model` 是逆序的**，所以执行顺序：
+
+```
+ClarificationMiddleware.after_model    ← 最后装的，after_model 最先执行 ★
+  ↓ (如果没拦截)
+SafetyFinishReasonMiddleware.after_model  ← 倒数第 2 装的，第 2 执行
+  ↓
+... 其他中间件（继续逆序）...
+```
+
+**这正是 DeerFlow 想要的**（注释在 `agent.py:366-373`）：
+
+```python
+# SafetyFinishReasonMiddleware — Registered after custom middlewares so
+# that LangChain's reverse-order after_model dispatch runs Safety first;
+# cleared tool_calls then flow through Loop/Subagent accounting without
+# firing extra alarms.
+```
+
+翻译："Safety 装在后面 → 逆序执行时它**先跑** → 先清掉危险的 tool_calls → 然后这些已清的消息再流经 Loop/Subagent 计数器 → 不会触发误报。"
+
+而 `ClarificationMiddleware` 装在**最最后** → 它的 `after_model` **最最最先跑** → 能第一时间拦截 `ask_clarification` → 在任何其他中间件处理之前就中断流程。
+
+#### 一张图总结全部
+
+```
+装配顺序（append 顺序）：A → B → C → D → E
+
+执行流程（假设都实现了所有 hook）：
+
+  before_agent:  A → B → C → D → E                      (正序)
+       │
+       ▼
+  ┌───────────────────────────────────────────────────┐
+  │ before_model: A → B → C → D → E                    │ (正序)
+  │      │                                             │
+  │      ▼                                             │
+  │  wrap_model_call: A(B(C(D(E(model)))))             │ (洋葱：A 最外)
+  │      │                                             │
+  │      ▼                                             │
+  │  after_model:  E → D → C → B → A                   │ (★ 逆序)
+  └───────────────────────────────────────────────────┘
+       │ (ReAct 循环，每轮跑一遍)
+       ▼
+  ┌───────────────────────────────────────────────────┐
+  │ wrap_tool_call: A(B(C(D(E(tool)))))                │ (洋葱：A 最外)
+  └───────────────────────────────────────────────────┘
+       │
+       ▼
+  after_agent:   E → D → C → B → A                      (★ 逆序)
+```
+
+#### 一句话记忆口诀
+
+> **`before_*` 正序进，`after_*` 逆序出，`wrap_*` 洋葱包（先装的在外层）。**
+
+**为什么这么设计？** 这样才能保证**最外层（最先装的）中间件"包"住所有内层**——它第一个进、最后一个出，拥有最完整的视野。这就是"洋葱模型"的精髓。
+
+---
 
 ## 1.8 最后一个关键概念：`create_agent` 到底造了什么？
 
